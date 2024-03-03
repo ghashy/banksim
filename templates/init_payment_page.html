@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Fake bank</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+      }
+
+      :root {
+        --bg_light: #fdfdfd;
+        --text_black: #000;
+        --text_white: #fff;
+        --accent_crimson: #a83654;
+        --accent_blue: #0b60b0;
+        --dark_gray: #5a5a5a;
+        --soft_dark_gray: #d9d9d9;
+        --middle_gray: #8b8b8b;
+        --light_gray: #eeeeee;
+        --gray_blue: #cacfd3;
+      }
+
+      body {
+        padding: 30vh 2rem;
+        background-color: var(--bg_light);
+      }
+
+      #error_overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        justify-content: center;
+        align-items: center;
+        width: 100vw;
+        height: 100vh;
+        font-size: 2rem;
+        background-color: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        color: var(--light_gray);
+        display: none;
+        z-index: 9999;
+      }
+
+      .content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      .title {
+        position: fixed;
+        top: 0;
+        left: 0;
+        padding: 1.4em 3.4em;
+        font-size: 1.25rem;
+        font-weight: bold;
+        border-radius: 0 0 2rem 0;
+        color: white;
+        background-color: var(--accent_crimson);
+        z-index: 999;
+      }
+
+      .total {
+        margin-top: 1em;
+        font-size: 1.25rem;
+        color: var(--dark_gray);
+      }
+
+      .price {
+        margin-top: 0.4em;
+        font-size: 1.25rem;
+        font-weight: bold;
+      }
+
+      form {
+        margin: 2rem auto 0;
+      }
+
+      .card {
+        position: relative;
+        display: flex;
+      }
+
+      .card_front {
+        width: 100%;
+        max-width: 20rem;
+        padding: 1.25rem;
+        border-radius: 0.25rem;
+        background-color: var(--text_white);
+        box-shadow: 0 0 0.5rem 0.125rem rgba(0, 0, 0, 0.11);
+      }
+
+      .card_back {
+        position: relative;
+        transform: translateX(-2px);
+        z-index: -1;
+        width: 8rem;
+        height: 14.875rem;
+        padding: 2rem 0;
+        border-radius: 0 0.25rem 0.25rem 0;
+        background-color: var(--light_gray);
+      }
+
+      .number_and_password {
+        display: flex;
+        flex-direction: column;
+      }
+
+      fieldset {
+        display: flex;
+        align-items: center;
+        border: none;
+      }
+
+      label,
+      legend {
+        width: fit-content;
+        margin-bottom: 0.5em;
+        font-size: 0.75rem;
+        color: var(--middle_gray);
+      }
+
+      input {
+        width: 100%;
+        padding: 0.375em 0.625em;
+        font-size: 1rem;
+        border: none;
+        border: 2px solid var(--gray_blue);
+        border-radius: 0.25rem;
+        caret-color: var(--accent_blue);
+      }
+
+      input::placeholder {
+        color: var(--gray_blue);
+      }
+
+      input:focus {
+        outline: none;
+        border: 2px solid var(--accent_blue);
+      }
+
+      input:disabled {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+
+      #card_number {
+        margin-bottom: 0.625rem;
+      }
+
+      #password {
+        margin-bottom: 1.25rem;
+      }
+
+      #month,
+      #year {
+        width: 3.2rem;
+      }
+
+      .slash {
+        margin: 0 0.4em;
+        font-size: 1.25rem;
+        color: var(--gray_blue);
+      }
+
+      .stripe {
+        width: 100%;
+        height: 2.125rem;
+        background-color: var(--soft_dark_gray);
+      }
+
+      .ccv {
+        margin: 0.75rem 1.25rem 0;
+      }
+
+      .ccv_prompt {
+        margin: 1em 1.25rem 0;
+        font-size: 0.625rem;
+        color: var(--middle_gray);
+      }
+
+      #ccv {
+        width: 3.5rem;
+      }
+
+      button {
+        width: 100%;
+        margin-top: 2rem;
+        padding: 0.8em 2em;
+        font-size: 1.125rem;
+        border: none;
+        border-radius: 0.25rem;
+        color: var(--text_white);
+        background-color: var(--accent_blue);
+        transition: 0.2s ease-out;
+        cursor: pointer;
+      }
+
+      button:hover {
+        filter: brightness(110%);
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+
+      button:disabled:hover {
+        filter: brightness(100%);
+      }
+
+      @media (max-width: 610px) {
+        .title {
+          width: 100%;
+          padding: 1.4em;
+          font-size: 1rem;
+          text-align: center;
+          border-radius: 0;
+        }
+
+        .card_back {
+          display: none;
+        }
+
+        button {
+          max-width: 20rem;
+          margin: 2rem auto 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="error_overlay">Транзакция недействительна</div>
+    <div class="title">HARMONY.SPHERE FAKE (TESTING) BANK</div>
+    <div class="content">
+      <h1>Оплата банковской картой</h1>
+      <p class="total">итого:</p>
+      <p class="price">{{ price }} KittyCoin</p>
+      <form onsubmit="submit_form(event)">
+        <div class="card">
+          <div class="card_front">
+            <div class="number_and_password">
+              <label for="card_number">Номер карты</label>
+              <input
+                type="text"
+                id="card_number"
+                placeholder="0000 0000 0000 0000"
+                oninput="format_card_number(event)"
+                maxlength="19"
+                required
+              />
+
+              <label for="password">Пароль</label>
+              <input
+                type="text"
+                id="password"
+                placeholder="Пароль"
+                required
+              />
+            </div>
+
+            <fieldset>
+              <legend>Действует до</legend>
+              <input
+                type="text"
+                id="month"
+                placeholder="ММ"
+                disabled
+              />
+              <p class="slash">/</p>
+              <input
+                type="text"
+                id="year"
+                placeholder="ГГ"
+                disabled
+              />
+            </fieldset>
+          </div>
+
+          <div class="card_back">
+            <div class="stripe"></div>
+
+            <div class="ccv">
+              <label for="ccv">CCV/CVC</label>
+              <input
+                type="text"
+                id="ccv"
+                placeholder="000"
+                disabled
+              />
+            </div>
+
+            <p class="ccv_prompt">три цифры с обратной стороны карты</p>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          id="submit_button"
+          disabled
+        >
+          Оплатить {{ price }} KittyCoin
+        </button>
+      </form>
+    </div>
+
+    <script defer>
+      // Format card number input
+      const format_card_number = (event) => {
+        const regex = /^[0-9]+$/;
+        if (event.target.value.length <= 1) {
+          if (!regex.test(event.target.value)) {
+            event.target.value = event.target.value.replace(/\D/g, "");
+            return;
+          }
+        }
+        let card_number = event.target.value.replace(/\D/g, "");
+        event.target.value = card_number.match(/.{1,4}/g).join(" ");
+
+        if (card_number.length === 16) {
+          document.getElementById("password").focus();
+        }
+      };
+
+      // Enable submit button
+      const card_input = document.getElementById("card_number");
+      const password_input = document.getElementById("password");
+      const submit_button = document.getElementById("submit_button");
+
+      const check_inputs = () => {
+        if (card_input.value && password_input.value) {
+          submit_button.removeAttribute("disabled");
+        } else {
+          submit_button.setAttribute("disabled", true);
+        }
+      };
+
+      card_input.addEventListener("input", check_inputs);
+      password_input.addEventListener("input", check_inputs);
+
+      // Submit
+      const submit_form = (event) => {
+        event.preventDefault();
+
+        const card_number = document.getElementById("card_number").value;
+        const password = document.getElementById("password").value;
+
+        const formatted_card_number = card_number.replace(/\s/g, "");
+
+        const payload = {
+          card_number: formatted_card_number,
+          password: password,
+        };
+
+        const post_data = async () => {
+          try {
+            const response = await fetch("{{ submit_payment_url }}", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(payload),
+            });
+            const data = await response.text();
+            console.log(data);
+            window.location.replace(data);
+          } catch (error) {
+            const error_overlay = document.getElementById("error_overlay");
+            error_overlay.style.display = "flex";
+            console.error(error);
+          }
+        };
+
+        post_data();
+      };
+    </script>
+  </body>
+</html>

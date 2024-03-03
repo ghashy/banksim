@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# Init payment test request
+curl -v -X POST localhost:15100/api/Init \
+    -H 'Content-Type: application/json' \
+    --data-raw '
+
+    {
+        "notification_url":"https://docker.com",
+        "success_url":"https://google.com",
+        "fail_url":"https://yandex.ru",
+        "amount":123,
+        "token":"10ce6ba5f35708e3c0cb1155dad97749ed92729eef3da4fd3da903a59a2e232e"
+    }'
+
+curl -X POST --location "http://localhost:15100/api/InitCardTokenRegistration" \
+    -H "Content-Type: application/json" \
+    --data-raw '
+
+        {
+            "notification_url":"https://docker.com",
+            "success_url":"https://google.com",
+            "fail_url":"https://yandex.ru",
+            "token":"8de3c11509eba15d042d0bddf9457a4f2ea90379676aa88b42a024fbf679ca19"
+        }'
+

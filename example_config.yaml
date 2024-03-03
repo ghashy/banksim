@@ -1,0 +1,13 @@
+port: 15100
+addr: localhost
+bank_username: bank_user
+terminal_settings:
+  terminal_key: 3C43FD0A-50E5-435F-8969-D83BC07C4912
+  success_url: "http://mydomain.com/success_path"
+  fail_url: "http://mydomain.com/fail_path"
+  success_add_card_url: "http://mydomain.com/add_card_success_path"
+  fail_add_card_url: "http://mydomain.com/add_card_fail_path"
+  notification_url: "http://mydomain.com/notification_path"
+  send_notification_finish_authorize: true
+  send_notification_completed: true
+  send_notification_reversed: true
