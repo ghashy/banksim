@@ -4,9 +4,9 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::Layer;
 
-use acquisim::ws_tracing_subscriber::WebSocketAppender;
-use acquisim::Application;
-use acquisim::Settings;
+use banksim::ws_tracing_subscriber::WebSocketAppender;
+use banksim::Application;
+use banksim::Settings;
 
 #[tokio::main]
 async fn main() {

@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex, MutexGuard};
 
-use acquisim_api::init_payment::InitPaymentRequest;
-use acquisim_api::register_card_token::RegisterCardTokenRequest;
+use banksim_api::init_payment::InitPaymentRequest;
+use banksim_api::register_card_token::RegisterCardTokenRequest;
 use serde::Serialize;
 use time::OffsetDateTime;
 use uuid::Uuid;

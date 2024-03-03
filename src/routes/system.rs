@@ -16,10 +16,8 @@ use crate::domain::requests::system_api::AddAccountRequest;
 use crate::domain::requests::system_api::DeleteAccountRequest;
 use crate::domain::requests::system_api::NewTransactionRequest;
 use crate::domain::requests::system_api::OpenCreditRequest;
+use crate::domain::responses::system_api::AddAccountResponse;
 use crate::domain::responses::system_api::ListAccountsResponse;
-use crate::domain::responses::system_api::{
-    AddAccountResponse, ListCardTokensResponse,
-};
 use crate::error_chain_fmt;
 use crate::middleware::BasicAuthLayer;
 use crate::startup::AppState;

@@ -1,13 +1,13 @@
 use crate::domain::card_number::CardNumber;
 use crate::html_gen::{SubmitCardNumberPage, SubmitPaymentPage};
 use crate::startup::AppState;
-use acquisim_api::init_payment::PaymentOperationNotification;
-use acquisim_api::register_card_token::RegisterCardTokenOperationResult;
 use askama::Template;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::Html;
 use axum::{routing, Json, Router};
+use banksim_api::init_payment::PaymentOperationNotification;
+use banksim_api::register_card_token::RegisterCardTokenOperationResult;
 use secrecy::Secret;
 use serde::Deserialize;
 use uuid::Uuid;

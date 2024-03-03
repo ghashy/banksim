@@ -1,24 +1,17 @@
-use acquisim_api::make_payment::{MakePaymentRequest, MakePaymentResponse};
-use acquisim_api::{Operation, Tokenizable};
-use axum::{
-    extract::State, http::StatusCode, response::IntoResponse, routing, Json,
-    Router,
-};
+use axum::{extract::State, routing, Json, Router};
+use banksim_api::make_payment::{MakePaymentRequest, MakePaymentResponse};
+use banksim_api::{Operation, Tokenizable};
 
 use serde::Serialize;
-use tokio::sync::TryLockError;
 use url::Url;
 
-use acquisim_api::init_payment::{InitPaymentRequest, InitPaymentResponse};
-use acquisim_api::register_card_token::{
+use banksim_api::init_payment::{InitPaymentRequest, InitPaymentResponse};
+use banksim_api::register_card_token::{
     RegisterCardTokenRequest, RegisterCardTokenResponse,
 };
 
-use crate::interaction_sessions::{IntoSession, SessionError};
-use crate::{
-    bank::BankOperationError, error_chain_fmt, startup::AppState,
-    tasks::wait_and_remove,
-};
+use crate::interaction_sessions::IntoSession;
+use crate::{startup::AppState, tasks::wait_and_remove};
 
 // ───── Handlers ─────────────────────────────────────────────────────────── //
 

@@ -18,7 +18,7 @@ use tokio::sync::TryLockError;
 use crate::domain::card_number::CardNumber;
 use crate::{error_chain_fmt, middleware::Credentials};
 
-use acquisim_api::init_payment::beneficiaries::Beneficiaries;
+use banksim_api::init_payment::beneficiaries::Beneficiaries;
 
 const SIMPLE_ISO: Iso8601<6651332276402088934156738804825718784> = Iso8601::<
     {
@@ -239,10 +239,6 @@ impl<'a> BankHandler<'a> {
             })
         }
         accounts
-    }
-
-    pub fn list_card_tokens(&self) -> HashMap<String, CardNumber> {
-        self.guard.tokens.clone()
     }
 
     pub fn authorize_account(

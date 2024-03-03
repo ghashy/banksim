@@ -1,10 +1,10 @@
 [package]
-name = "acquisim"
+name = "banksim"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-acquisim-api = { path = "../backends/acquisim-api"}
+banksim-api = { git = "https://github.com/ghashy/airactions.git"}
 
 # Web-related dependencies
 axum = { version = "0.7.4", features = ["macros", "tracing"] }
@@ -14,18 +14,15 @@ tokio = { version = "1.36.0", features = [
   "rt-multi-thread",
   "signal",
 ] }
-reqwest = { version = "0.11.23", default-features = false, features = [
+reqwest = { version = "0.11.24", default-features = false, features = [
   "json",
-  # "rustls-tls",
-  # "multipart",
-  # "cookies",
 ] }
 
 fastwebsockets = { version = "0.7.0", features = ["upgrade", "with_axum"] }
 
 # Serialization-related dependencies
-serde = { version = "1.0.196", features = ["derive"] }
-serde_json = "1.0.113"
+serde = { version = "1.0.197", features = ["derive"] }
+serde_json = "1.0.114"
 
 # Telemetry
 tracing = "0.1.40"
