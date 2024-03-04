@@ -16,8 +16,8 @@ pub struct Settings {
 
 impl Settings {
     pub fn load_configuration() -> Result<Settings, anyhow::Error> {
-        let config_file = std::env::var("ACQUISIM_CONFIG_FILE")
-            .expect("ACQUISIM_CONFIG_FILE var is unset!");
+        let config_file = std::env::var("BANKSIM_CONFIG_FILE")
+            .expect("BANKSIM_CONFIG_FILE var is unset!");
 
         config::Config::builder()
             .add_source(config::File::new(&config_file, FileFormat::Yaml))

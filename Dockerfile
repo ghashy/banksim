@@ -5,7 +5,7 @@ ARG RUST_VERSION=1.76
 FROM rust:${RUST_VERSION}-slim-bookworm AS build
 
 # This ARG should be after `FROM` clause
-ARG APP_NAME=acquisim
+ARG APP_NAME=banksim
 WORKDIR /app
 
 RUN apt update && apt install libssl-dev pkg-config -y
@@ -45,6 +45,6 @@ COPY --from=build /app/$APP_NAME /app/$APP_NAME
 EXPOSE 15100
 
 # What the container should run when it is started.
-CMD ["/app/acquisim"]
+CMD ["/app/banksim"]
 
 
