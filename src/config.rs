@@ -29,7 +29,9 @@ impl Settings {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct TerminalSettings {
+    // Currently unused
     pub terminal_key: uuid::Uuid,
+
     pub success_url: Url,
     pub fail_url: Url,
     pub success_add_card_url: Url,
