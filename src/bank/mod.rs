@@ -95,9 +95,10 @@ impl Bank {
         }
     }
 
+    /// IMPORTANT: Do not hold that handler across `.await` to avoid deadlock!
     pub async fn handler(&self) -> BankHandler {
-        let lock = self.lock().await;
-        BankHandler { guard: lock }
+        let guard = self.lock().await;
+        BankHandler { guard }
     }
 
     async fn lock(&self) -> MutexGuard<BankInner> {
@@ -149,12 +150,6 @@ pub struct BankHandler<'a> {
     guard: MutexGuard<'a, BankInner>,
 }
 
-impl<'a> Drop for BankHandler<'a> {
-    fn drop(&mut self) {
-        self.notify();
-    }
-}
-
 impl<'a> BankHandler<'a> {
     pub fn subscribe(&self) -> Receiver<()> {
         self.guard.notifier.subscribe()
@@ -185,6 +180,7 @@ impl<'a> BankHandler<'a> {
         };
         self.guard.accounts.push(account.clone());
 
+        self.notify();
         account.card_number
     }
 
@@ -214,6 +210,7 @@ impl<'a> BankHandler<'a> {
             }
         };
 
+        self.notify();
         result
     }
 
@@ -317,6 +314,7 @@ impl<'a> BankHandler<'a> {
 
         self.guard.transactions.push(transaction);
 
+        self.notify();
         Ok(())
     }
 
@@ -373,6 +371,7 @@ impl<'a> BankHandler<'a> {
             self.guard.transactions.push(transaction);
         }
 
+        self.notify();
         Ok(())
     }
 
@@ -392,6 +391,7 @@ impl<'a> BankHandler<'a> {
 
         self.guard.transactions.push(transaction);
 
+        self.notify();
         Ok(())
     }
 
@@ -411,6 +411,7 @@ impl<'a> BankHandler<'a> {
         let token = generate_token();
 
         self.guard.tokens.insert(token.clone(), card);
+        self.notify();
         Ok(token)
     }
 

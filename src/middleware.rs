@@ -63,7 +63,9 @@ where
             let state = state;
             match credentials {
                 Ok(cred) => {
-                    match state.bank.handler().await.authorize_system(cred) {
+                    let authorize_system =
+                        state.bank.handler().await.authorize_system(cred);
+                    match authorize_system {
                         Ok(()) => {
                             tracing::info!("Basic auth passed");
                             let response: Response = future.await?;
