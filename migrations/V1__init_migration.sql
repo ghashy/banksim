@@ -1,10 +1,10 @@
 CREATE TABLE accounts (
     id SERIAL PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    username VARCHAR(100) NOT NULL,
-    card_number VARCHAR(16) NOT NULL,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    card_number VARCHAR(16) NOT NULL UNIQUE,
     password_hash VARCHAR(500) NOT NULL,
-    is_existing BOOL NOT NULL
+    is_existing BOOL NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE transactions (

@@ -5,6 +5,7 @@ use axum::{extract::Request, response::Response};
 use base64::Engine;
 use futures::future::BoxFuture;
 use secrecy::Secret;
+use std::error::Error;
 use std::task::Poll;
 use tower::{Layer, Service};
 
@@ -69,7 +70,7 @@ where
                         Ok(response)
                     }
                     Err(e) => {
-                        tracing::info!("Failed to authorize: {}", e);
+                        tracing::info!("Failed to authorize: {:?}", e.source());
                         Ok(StatusCode::UNAUTHORIZED.into_response())
                     }
                 },

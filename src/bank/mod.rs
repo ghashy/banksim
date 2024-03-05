@@ -10,6 +10,7 @@ use time::format_description::well_known::Iso8601;
 use time::OffsetDateTime;
 use tokio::sync::TryLockError;
 
+use crate::cornucopia::queries::bank_queries::GetAccount;
 use crate::domain::card_number::CardNumber;
 use crate::error_chain_fmt;
 use crate::Settings;
@@ -35,6 +36,8 @@ time::serde::format_description!(iso_format, OffsetDateTime, SIMPLE_ISO);
 
 #[derive(thiserror::Error)]
 pub enum BankOperationError {
+    #[error("Internal error")]
+    InternalError(#[from] anyhow::Error),
     #[error("No account")]
     AccountNotFound,
     #[error("No account for token")]
@@ -109,6 +112,18 @@ impl PartialEq for Account {
     }
 }
 
+impl TryFrom<GetAccount> for Account {
+    type Error = anyhow::Error;
+    fn try_from(value: GetAccount) -> Result<Self, Self::Error> {
+        Ok(Account {
+            username: value.username,
+            card_number: value.card_number.parse()?,
+            password: Secret::new(String::new()),
+            is_existing: value.is_existing,
+        })
+    }
+}
+
 /// Generate card token.
 fn generate_token() -> String {
     rand::thread_rng()
@@ -135,7 +150,7 @@ mod tests {
         let url: Url = "http://google.com".parse().unwrap();
         let settings = Settings {
             data_backend_type: crate::config::DataBackendType::Mem,
-            data_settings: None,
+            database_settings: None,
             port: 15100,
             addr: "localhost".to_string(),
             terminal_settings: TerminalSettings {

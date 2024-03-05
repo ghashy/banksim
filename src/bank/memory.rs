@@ -167,15 +167,6 @@ impl BankDataBackend for MemoryStorage {
         {
             Ok(())
         } else {
-            eprintln!(
-                "Passwords: given: {}, need: {}",
-                credentials.password.expose_secret(),
-                password
-            );
-            eprintln!(
-                "Usernames: given: {}, need: {}",
-                credentials.username, bank_username
-            );
             Err(BankOperationError::NotAuthorized)
         }
     }

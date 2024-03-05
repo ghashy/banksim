@@ -16,7 +16,7 @@ pub enum DataBackendType {
 pub struct Settings {
     #[serde(default = "data_backend_type")]
     pub data_backend_type: DataBackendType,
-    pub data_settings: Option<DatabaseSettings>,
+    pub database_settings: Option<DatabaseSettings>,
     pub port: u16,
     pub addr: String,
     pub terminal_settings: TerminalSettings,
