@@ -7,7 +7,16 @@ use serde::Deserialize;
 use url::Url;
 
 #[derive(Deserialize, Debug, Clone)]
+pub enum DataBackendType {
+    Pg,
+    Mem,
+}
+
+#[derive(Deserialize, Debug, Clone)]
 pub struct Settings {
+    #[serde(default = "data_backend_type")]
+    pub data_backend_type: DataBackendType,
+    pub data_settings: Option<DatabaseSettings>,
     pub port: u16,
     pub addr: String,
     pub terminal_settings: TerminalSettings,
@@ -47,6 +56,15 @@ pub struct TerminalSettings {
     pub send_notification_reversed: bool,
 }
 
+#[derive(Deserialize, Debug, Clone)]
+pub struct DatabaseSettings {
+    pub username: String,
+    pub database_name: String,
+    pub host: String,
+    #[serde(default = "pg_password")]
+    pub password: Secret<String>,
+}
+
 fn terminal_password() -> Secret<String> {
     Secret::new(
         load_value_from_file(
@@ -55,6 +73,26 @@ fn terminal_password() -> Secret<String> {
         )
         .expect("Can't read terminal password file!"),
     )
+}
+
+fn pg_password() -> Secret<String> {
+    Secret::new(
+        load_value_from_file(
+            std::env::var("POSTGRES_PASSWORD_FILE")
+                .expect("POSTGRES_PASSWORD_FILE var is unset!"),
+        )
+        .expect("Can't read postgres password file!"),
+    )
+}
+
+fn data_backend_type() -> DataBackendType {
+    let value = std::env::var("DATA_BACKEND_TYPE")
+        .expect("DATA_BACKEND_TYPE var is unset!");
+    match value.as_str() {
+        "postgres" => DataBackendType::Pg,
+        "memory" => DataBackendType::Mem,
+        _ => panic!(),
+    }
 }
 
 fn load_value_from_file<T: AsRef<Path>>(

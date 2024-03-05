@@ -9,6 +9,7 @@ mod startup;
 pub mod domain;
 pub mod tasks;
 pub mod ws_tracing_subscriber;
+pub mod cornucopia;
 
 use std::error::Error;
 
