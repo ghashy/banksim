@@ -3,4 +3,6 @@
 Cargo.lock
 
 /secrets
+/scripts
 /.idea
+refinery.toml
