@@ -76,7 +76,8 @@ async fn add_account(
     State(state): State<AppState>,
     Json(req): Json<AddAccountRequest>,
 ) -> Result<Json<AddAccountResponse>, SystemApiError> {
-    let card_number = state.bank.handler().await.add_account(&req.password);
+    let card_number =
+        state.bank.add_account(&req.username, &req.password).await?;
     Ok(Json(AddAccountResponse { card_number }))
 }
 
@@ -85,7 +86,7 @@ async fn delete_account(
     State(state): State<AppState>,
     Json(req): Json<DeleteAccountRequest>,
 ) -> Result<StatusCode, SystemApiError> {
-    state.bank.handler().await.delete_account(req.card_number)?;
+    state.bank.delete_account(&req.card_number).await?;
     Ok(StatusCode::OK)
 }
 
@@ -93,7 +94,7 @@ async fn delete_account(
 async fn list_accounts(
     State(state): State<AppState>,
 ) -> Result<Json<ListAccountsResponse>, SystemApiError> {
-    let accounts = state.bank.handler().await.list_accounts();
+    let accounts = state.bank.list_accounts().await?;
     Ok(Json(ListAccountsResponse { accounts }))
 }
 
@@ -102,11 +103,7 @@ async fn open_credit(
     State(state): State<AppState>,
     Json(req): Json<OpenCreditRequest>,
 ) -> Result<StatusCode, SystemApiError> {
-    state
-        .bank
-        .handler()
-        .await
-        .open_credit(req.card_number, req.amount)?;
+    state.bank.open_credit(&req.card_number, req.amount).await?;
     Ok(StatusCode::OK)
 }
 
@@ -115,40 +112,45 @@ async fn new_transaction(
     State(state): State<AppState>,
     Json(req): Json<NewTransactionRequest>,
 ) -> Result<StatusCode, SystemApiError> {
-    let mut bank_handler = state.bank.handler().await;
-    let sender = bank_handler.find_account(&req.from)?;
-    let receiver = bank_handler.find_account(&req.to)?;
-    bank_handler.new_transaction(&sender, &receiver, req.amount)?;
+    state
+        .bank
+        .new_transaction(&req.from, &req.to, req.amount)
+        .await?;
     Ok(StatusCode::OK)
 }
 
 #[tracing::instrument(name = "Get a vec with transactions", skip_all)]
 async fn list_transactions(
     State(state): State<AppState>,
-) -> Json<Vec<Transaction>> {
-    Json(state.bank.handler().await.list_transactions())
+) -> Result<Json<Vec<Transaction>>, SystemApiError> {
+    Ok(Json(state.bank.list_transactions().await?))
 }
 
 #[tracing::instrument(name = "Get bank emission", skip_all)]
-async fn emission(State(state): State<AppState>) -> String {
-    state.bank.handler().await.bank_emission().to_string()
+async fn emission(
+    State(state): State<AppState>,
+) -> Result<String, SystemApiError> {
+    Ok(state.bank.bank_emission().await?.to_string())
 }
 
 #[tracing::instrument(name = "Get store balance", skip_all)]
-async fn store_balance(State(state): State<AppState>) -> String {
-    state.bank.handler().await.store_balance().to_string()
+async fn store_balance(
+    State(state): State<AppState>,
+) -> Result<String, SystemApiError> {
+    Ok(state.bank.store_balance().await?.to_string())
 }
 
 #[tracing::instrument(name = "Get store card number", skip_all)]
-async fn store_card(State(state): State<AppState>) -> String {
-    state
+async fn store_card(
+    State(state): State<AppState>,
+) -> Result<String, SystemApiError> {
+    Ok(state
         .bank
-        .handler()
-        .await
         .get_store_account()
+        .await?
         .card()
         .as_ref()
-        .to_string()
+        .to_string())
 }
 
 #[tracing::instrument(name = "Register a ws accounts subscriber", skip_all)]
@@ -184,7 +186,7 @@ async fn handle_accounts_subscriber(
     fut: upgrade::UpgradeFut,
 ) -> Result<(), WebSocketError> {
     let mut ws = fastwebsockets::FragmentCollector::new(fut.await?);
-    let mut rx = state.bank.handler().await.subscribe();
+    let mut rx = state.bank.subscribe().await;
 
     loop {
         tokio::select! {

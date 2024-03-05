@@ -54,10 +54,14 @@ where
         return Json(Response::operation_error("Unauthorized".to_string()));
     }
 
-    let bank_handler = state.bank.handler().await;
-
     // We have only one store account in our virtual bank
-    let store_card = bank_handler.get_store_account().card();
+    let store_card = match state.bank.get_store_account().await {
+        Ok(acc) => acc.card(),
+        Err(e) => {
+            tracing::error!("Failed to get store account: {e}");
+            return Json(Response::operation_error(e.to_string()));
+        }
+    };
 
     let session = req.create_session(store_card);
     let id = session.id();
@@ -112,21 +116,29 @@ async fn make_payment(
         return Json(MakePaymentResponse::err("Unauthorized".to_string()));
     }
 
-    let mut bank_handler = state.bank.handler().await;
-
     // We have only one store account in our virtual bank
-    let store = bank_handler.get_store_account();
+    let store_card = match state.bank.get_store_account().await {
+        Ok(acc) => acc.card(),
+        Err(e) => {
+            tracing::error!("Failed to get store account: {e}");
+            return Json(MakePaymentResponse::err(e.to_string()));
+        }
+    };
 
-    let recipient =
-        match bank_handler.get_account_by_token(&req.recipient_token) {
-            Ok(acc) => acc,
+    let recipient_card =
+        match state.bank.get_account_by_token(&req.recipient_token).await {
+            Ok(acc) => acc.card(),
             Err(e) => {
                 tracing::error!("Failed to find account by card token: {e}");
                 return Json(MakePaymentResponse::err(e.to_string()));
             }
         };
 
-    match bank_handler.new_transaction(&store, &recipient, req.amount) {
+    match state
+        .bank
+        .new_transaction(&store_card, &recipient_card, req.amount)
+        .await
+    {
         Ok(()) => Json(MakePaymentResponse::success()),
         Err(e) => {
             tracing::error!("Failed to make transaction: {e}");

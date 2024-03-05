@@ -104,13 +104,14 @@ pub async fn trigger_payment(
         }
     };
     let req = session.session_type.payment_req();
-    let mut bank_handler = state.bank.handler().await;
 
     // Authorize payer's card and password
-    let account = match bank_handler
+    let payer_card = match state
+        .bank
         .authorize_account(&creds.card_number, &creds.password)
+        .await
     {
-        Ok(acc) => acc,
+        Ok(acc) => acc.card(),
         Err(e) => {
             // Not authorized
             tracing::error!("Can't authorize account: {e}");
@@ -119,21 +120,31 @@ pub async fn trigger_payment(
     };
 
     // Check store account
-    let store_account = bank_handler.get_store_account();
-    if !store_account.card().eq(&session.store_card) {
+    // We have only one store account in our virtual bank
+    let store_card = match state.bank.get_store_account().await {
+        Ok(acc) => acc.card(),
+        Err(e) => {
+            tracing::error!("Failed to get store account: {e}");
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    if !store_card.eq(&session.store_card) {
         tracing::error!("Failed to perform payment: wrong store account!");
         return Ok(req.fail_url.to_string());
     }
 
     // Perform transaction
     let result = if !req.beneficiaries.is_empty() {
-        bank_handler.new_transaction(&account, &store_account, req.amount)
+        state
+            .bank
+            .new_transaction(&payer_card, &store_card, req.amount)
+            .await
     } else {
-        bank_handler.new_split_transaction(
-            &account,
-            req.amount,
-            &req.beneficiaries,
-        )
+        state
+            .bank
+            .new_split_transaction(&payer_card, req.amount, &req.beneficiaries)
+            .await
     };
 
     match result {
@@ -208,7 +219,6 @@ pub async fn trigger_card_token_registration(
     };
 
     let req = session.session_type.register_card_token_req();
-    let mut bank_handler = state.bank.handler().await;
 
     // Authorize card and password
     let Ok(card) = CardNumber::parse(&body) else {
@@ -217,14 +227,21 @@ pub async fn trigger_card_token_registration(
     };
 
     // Check store account
-    let store_account = bank_handler.get_store_account();
+    let store_account = match state.bank.get_store_account().await {
+        Ok(acc) => acc,
+        Err(e) => {
+            tracing::error!("Failed to get store account: {e}");
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
     if !store_account.card().eq(&session.store_card) {
         tracing::error!("Failed to register card token: wrong store account!");
         return Ok(req.fail_url.to_string());
     }
 
     // Generate token
-    let token = match bank_handler.new_card_token(card) {
+    let token = match state.bank.new_card_token(&card).await {
         Ok(token) => token,
         Err(e) => {
             tracing::error!("Failed to generate new card token: {e}");

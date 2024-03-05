@@ -1,24 +1,24 @@
-use std::collections::HashMap;
+use std::ops::Deref;
 use std::sync::Arc;
 
 use rand::{distributions::Alphanumeric, Rng};
-use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
-use rust_decimal::Decimal;
-use secrecy::{ExposeSecret, Secret};
+use secrecy::Secret;
 use serde::Serialize;
 use time::format_description::well_known::iso8601;
 use time::format_description::well_known::iso8601::TimePrecision;
 use time::format_description::well_known::Iso8601;
 use time::OffsetDateTime;
-use tokio::sync::watch::{Receiver, Sender};
-use tokio::sync::Mutex;
-use tokio::sync::MutexGuard;
 use tokio::sync::TryLockError;
 
 use crate::domain::card_number::CardNumber;
-use crate::{error_chain_fmt, middleware::Credentials};
+use crate::error_chain_fmt;
+use crate::Settings;
 
-use banksim_api::init_payment::beneficiaries::Beneficiaries;
+use self::backend::BankDataBackend;
+
+mod backend;
+pub mod memory;
+pub mod pg;
 
 const SIMPLE_ISO: Iso8601<6651332276402088934156738804825718784> = Iso8601::<
     {
@@ -61,48 +61,21 @@ impl std::fmt::Debug for BankOperationError {
 
 #[derive(Clone, Debug)]
 pub struct Bank {
-    inner: Arc<Mutex<BankInner>>,
+    inner: Arc<dyn BankDataBackend + Send + Sync>,
+}
+
+impl Deref for Bank {
+    type Target = Arc<dyn BankDataBackend + Send + Sync>;
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
 }
 
 impl Bank {
-    /// Constructor
-    pub fn new(cashbox_pass: &Secret<String>, bank_username: &str) -> Self {
+    pub fn new<T: backend::InitBankDataBackend>(settings: &Settings) -> Self {
         let (tx, _) = tokio::sync::watch::channel(());
-
-        let emission_account = Account {
-            card_number: CardNumber::generate(),
-            password: cashbox_pass.clone(),
-            is_existing: true,
-        };
-
-        let store_account = Account {
-            card_number: CardNumber::generate(),
-            password: cashbox_pass.clone(),
-            is_existing: true,
-        };
-
-        let bank = BankInner {
-            tokens: HashMap::new(),
-            accounts: Vec::new(),
-            emission_account,
-            store_account,
-            transactions: Vec::new(),
-            bank_username: bank_username.to_string(),
-            notifier: tx,
-        };
-        Bank {
-            inner: Arc::new(Mutex::new(bank)),
-        }
-    }
-
-    /// IMPORTANT: Do not hold that handler across `.await` to avoid deadlock!
-    pub async fn handler(&self) -> BankHandler {
-        let guard = self.lock().await;
-        BankHandler { guard }
-    }
-
-    async fn lock(&self) -> MutexGuard<BankInner> {
-        self.inner.lock().await
+        let bank = T::new(settings, tx);
+        Bank { inner: bank }
     }
 }
 
@@ -117,6 +90,7 @@ pub struct Transaction {
 
 #[derive(Serialize, Clone, Debug)]
 pub struct Account {
+    username: String,
     card_number: CardNumber,
     #[serde(skip)]
     password: Secret<String>,
@@ -135,338 +109,6 @@ impl PartialEq for Account {
     }
 }
 
-#[derive(Debug)]
-struct BankInner {
-    tokens: HashMap<String, CardNumber>,
-    accounts: Vec<Account>,
-    transactions: Vec<Transaction>,
-    emission_account: Account,
-    store_account: Account,
-    bank_username: String,
-    notifier: Sender<()>,
-}
-
-pub struct BankHandler<'a> {
-    guard: MutexGuard<'a, BankInner>,
-}
-
-impl<'a> BankHandler<'a> {
-    pub fn subscribe(&self) -> Receiver<()> {
-        self.guard.notifier.subscribe()
-    }
-
-    /// Validate system account credentials
-    pub fn authorize_system(
-        &self,
-        credentials: Credentials,
-    ) -> Result<(), BankOperationError> {
-        let bank_username = &self.guard.bank_username;
-        let password = self.guard.emission_account.password.expose_secret();
-        if bank_username.eq(&credentials.username)
-            && password.eq(credentials.password.expose_secret())
-        {
-            Ok(())
-        } else {
-            Err(BankOperationError::NotAuthorized)
-        }
-    }
-
-    /// Add a new account
-    pub fn add_account(&mut self, password: &Secret<String>) -> CardNumber {
-        let account = Account {
-            card_number: CardNumber::generate(),
-            is_existing: true,
-            password: password.clone(),
-        };
-        self.guard.accounts.push(account.clone());
-
-        self.notify();
-        account.card_number
-    }
-
-    /// Mark existing account as deleted
-    pub fn delete_account(
-        &mut self,
-        card: CardNumber,
-    ) -> Result<(), BankOperationError> {
-        let result = match self
-            .guard
-            .accounts
-            .iter_mut()
-            .find(|acc| acc.card_number.eq(&card))
-        {
-            Some(acc) => {
-                acc.is_existing = false;
-                Ok(())
-            }
-            None => {
-                if self.guard.store_account.card_number.eq(&card) {
-                    Err(BankOperationError::BadOperation(
-                        "Can't delete store account".to_string(),
-                    ))
-                } else {
-                    Err(BankOperationError::AccountNotFound)
-                }
-            }
-        };
-
-        self.notify();
-        result
-    }
-
-    /// Get Vec<Account>
-    pub fn list_accounts(
-        &self,
-    ) -> Vec<crate::domain::responses::system_api::Account> {
-        let mut accounts = Vec::new();
-        for acc in self.guard.accounts.iter() {
-            let tokens = self
-                .guard
-                .tokens
-                .iter()
-                .filter(|(_, &ref card)| card.eq(&acc.card_number))
-                .map(|(&ref token, _)| token.clone())
-                .collect();
-            accounts.push(crate::domain::responses::system_api::Account {
-                card_number: acc.card_number.clone(),
-                balance: self.balance(acc),
-                transactions: self.account_transactions(acc),
-                exists: acc.is_existing,
-                tokens,
-            })
-        }
-        accounts
-    }
-
-    pub fn authorize_account(
-        &self,
-        card: &CardNumber,
-        password: &Secret<String>,
-    ) -> Result<Account, BankOperationError> {
-        let account = self.find_account(card)?;
-        if !account
-            .password
-            .expose_secret()
-            .eq(password.expose_secret())
-        {
-            Err(BankOperationError::NotAuthorized)
-        } else {
-            Ok(account.clone())
-        }
-    }
-
-    pub fn find_account(
-        &self,
-        card: &CardNumber,
-    ) -> Result<Account, BankOperationError> {
-        let account = self
-            .guard
-            .accounts
-            .iter()
-            .find(|&acc| acc.card_number.eq(card))
-            .or_else(|| {
-                if self.guard.store_account.card_number.eq(card) {
-                    Some(&self.guard.store_account)
-                } else {
-                    None
-                }
-            })
-            .ok_or(BankOperationError::AccountNotFound)?;
-        if !account.is_existing {
-            return Err(BankOperationError::AccountIsDeleted);
-        }
-        Ok(account.clone())
-    }
-
-    pub fn get_store_account(&self) -> Account {
-        self.guard.store_account.clone()
-    }
-
-    pub fn store_balance(&self) -> i64 {
-        let store_acc = &self.guard.store_account;
-        self.balance(store_acc)
-    }
-
-    pub fn new_transaction(
-        &mut self,
-        sender: &Account,
-        recipient: &Account,
-        amount: i64,
-    ) -> Result<(), BankOperationError> {
-        if sender == recipient {
-            return Err(BankOperationError::BadTransaction);
-        }
-
-        if self.balance(sender) < amount {
-            return Err(BankOperationError::NotEnoughFunds);
-        }
-
-        if amount <= 0 {
-            return Err(BankOperationError::BadTransaction);
-        }
-
-        let transaction = Transaction {
-            sender: sender.clone(),
-            recipient: recipient.clone(),
-            amount,
-            datetime: OffsetDateTime::now_utc(),
-        };
-
-        self.guard.transactions.push(transaction);
-
-        self.notify();
-        Ok(())
-    }
-
-    pub fn new_split_transaction(
-        &mut self,
-        sender: &Account,
-        amount: i64,
-        beneficiaries: &Beneficiaries,
-    ) -> Result<(), BankOperationError> {
-        beneficiaries
-            .validate()
-            .map_err(|_| BankOperationError::BadTransaction)?;
-        let mut bfc = Vec::with_capacity(beneficiaries.count());
-        for (token, part) in beneficiaries.iter_tokens() {
-            let acc = self.get_account_by_token(token)?;
-            bfc.push((acc, part));
-        }
-
-        if bfc
-            .iter()
-            .map(|(acc, _)| acc)
-            .find(|acc| acc.eq(&sender))
-            .is_some()
-        {
-            return Err(BankOperationError::BadTransaction);
-        }
-
-        if self.balance(sender) < amount {
-            return Err(BankOperationError::NotEnoughFunds);
-        }
-
-        if amount <= 0 {
-            return Err(BankOperationError::BadTransaction);
-        }
-
-        let amount = Decimal::from_i64(amount).ok_or(
-            BankOperationError::BadOperation(
-                "Can't convert money correctly".to_string(),
-            ),
-        )?;
-
-        for (recipient, part) in bfc.into_iter() {
-            let amount = (amount * part).round().to_i64().ok_or(
-                BankOperationError::BadOperation(
-                    "Can't convert money correctly".to_string(),
-                ),
-            )?;
-            let transaction = Transaction {
-                sender: sender.clone(),
-                recipient: recipient.clone(),
-                amount,
-                datetime: OffsetDateTime::now_utc(),
-            };
-            self.guard.transactions.push(transaction);
-        }
-
-        self.notify();
-        Ok(())
-    }
-
-    pub fn open_credit(
-        &mut self,
-        card: CardNumber,
-        amount: i64,
-    ) -> Result<(), BankOperationError> {
-        let account = self.find_account(&card)?.clone();
-
-        let transaction = Transaction {
-            sender: self.guard.emission_account.clone(),
-            recipient: account,
-            amount,
-            datetime: OffsetDateTime::now_utc(),
-        };
-
-        self.guard.transactions.push(transaction);
-
-        self.notify();
-        Ok(())
-    }
-
-    pub fn list_transactions(&self) -> Vec<Transaction> {
-        self.guard.transactions.clone()
-    }
-
-    pub fn bank_emission(&self) -> i64 {
-        self.balance(&self.guard.emission_account)
-    }
-
-    pub fn new_card_token(
-        &mut self,
-        card: CardNumber,
-    ) -> Result<String, BankOperationError> {
-        let _ = self.find_account(&card)?;
-        let token = generate_token();
-
-        self.guard.tokens.insert(token.clone(), card);
-        self.notify();
-        Ok(token)
-    }
-
-    pub fn get_account_by_token(
-        &self,
-        token: &str,
-    ) -> Result<Account, BankOperationError> {
-        let card = self
-            .guard
-            .tokens
-            .get(token)
-            .ok_or(BankOperationError::TokenNotFound)?
-            .clone();
-        self.find_account(&card)
-    }
-
-    fn balance(&self, account: &Account) -> i64 {
-        let balance = self
-            .guard
-            .transactions
-            .iter()
-            .filter(|&transaction| {
-                transaction.sender.eq(&account)
-                    || transaction.recipient.eq(&account)
-            })
-            .fold(0i64, |amount, transaction| {
-                if transaction.sender.eq(&account) {
-                    amount - transaction.amount
-                } else {
-                    amount + transaction.amount
-                }
-            });
-        balance
-    }
-
-    fn account_transactions(&self, acc: &Account) -> Vec<Transaction> {
-        self.guard
-            .transactions
-            .iter()
-            .filter(|&transaction| {
-                transaction.sender.eq(&acc) || transaction.recipient.eq(&acc)
-            })
-            .cloned()
-            .collect()
-    }
-
-    /// I want to notify my subscribers to update their accounts info
-    /// after every bank lock
-    fn notify(&self) {
-        if let Err(e) = self.guard.notifier.send(()) {
-            tracing::error!("Failed to send bank lock notification: {e}");
-        }
-    }
-}
-
 /// Generate card token.
 fn generate_token() -> String {
     rand::thread_rng()
@@ -478,29 +120,63 @@ fn generate_token() -> String {
 
 #[cfg(test)]
 mod tests {
+    use crate::config::TerminalSettings;
+
+    use self::memory::MemoryStorage;
+
     use super::*;
+    use banksim_api::init_payment::beneficiaries::Beneficiaries;
     use rs_merkle::{Hasher, MerkleTree};
+    use rust_decimal::{prelude::FromPrimitive, Decimal};
+    use url::Url;
+    use uuid::Uuid;
 
     fn make_bank() -> Bank {
-        let password = Secret::new(String::from("pass"));
-        Bank::new(&password, "test_bank")
+        let url: Url = "http://google.com".parse().unwrap();
+        let settings = Settings {
+            data_backend_type: crate::config::DataBackendType::Mem,
+            data_settings: None,
+            port: 15100,
+            addr: "localhost".to_string(),
+            terminal_settings: TerminalSettings {
+                terminal_key: Uuid::new_v4(),
+                success_url: url.clone(),
+                fail_url: url.clone(),
+                success_add_card_url: url.clone(),
+                fail_add_card_url: url.clone(),
+                notification_url: url.clone(),
+                password: Secret::new(String::from("pass")),
+                send_notification_finish_authorize: false,
+                send_notification_completed: false,
+                send_notification_reversed: false,
+            },
+            bank_username: "test_bank".to_string(),
+        };
+        Bank::new::<MemoryStorage>(&settings)
     }
 
     #[tokio::test]
     async fn split_transaction_success() {
         let bank = make_bank();
-        let mut handler = bank.handler().await;
-        let payer_card = handler.add_account(&Secret::new("pass".to_string()));
-        let payer_acc = handler.find_account(&payer_card).unwrap();
-        handler.open_credit(payer_card, 500).unwrap();
+        let payer_card = bank
+            .add_account("payer", &Secret::new("pass".to_string()))
+            .await
+            .unwrap();
+        bank.open_credit(&payer_card, 500).await.unwrap();
 
-        let store = handler.get_store_account().card();
-        let bfc1 = handler.add_account(&Secret::new("pass".to_string()));
-        let bfc2 = handler.add_account(&Secret::new("pass".to_string()));
+        let store = bank.get_store_account().await.unwrap().card();
+        let bfc1 = bank
+            .add_account("bfc1", &Secret::new("pass".to_string()))
+            .await
+            .unwrap();
+        let bfc2 = bank
+            .add_account("bfc2", &Secret::new("pass".to_string()))
+            .await
+            .unwrap();
 
-        let store_tok = handler.new_card_token(store).unwrap();
-        let bfc1_tok = handler.new_card_token(bfc1.clone()).unwrap();
-        let bfc2_tok = handler.new_card_token(bfc2.clone()).unwrap();
+        let store_tok = bank.new_card_token(&store).await.unwrap();
+        let bfc1_tok = bank.new_card_token(&bfc1.clone()).await.unwrap();
+        let bfc2_tok = bank.new_card_token(&bfc2.clone()).await.unwrap();
 
         let bfc =
             Beneficiaries::builder(store_tok, Decimal::from_f32(0.37).unwrap())
@@ -509,14 +185,19 @@ mod tests {
                 .build()
                 .unwrap();
 
-        handler
-            .new_split_transaction(&payer_acc, 256, &bfc)
+        bank.new_split_transaction(&payer_card, 256, &bfc)
+            .await
             .unwrap();
 
-        assert_eq!(handler.balance(&handler.get_store_account()), 95);
-        assert_eq!(handler.balance(&handler.find_account(&bfc1).unwrap()), 79);
-        assert_eq!(handler.balance(&handler.find_account(&bfc2).unwrap()), 82);
-        assert_eq!(handler.balance(&payer_acc), 244);
+        assert_eq!(
+            bank.balance(&bank.get_store_account().await.unwrap().card())
+                .await
+                .unwrap(),
+            95
+        );
+        assert_eq!(bank.balance(&bfc1).await.unwrap(), 79);
+        assert_eq!(bank.balance(&bfc2).await.unwrap(), 82);
+        assert_eq!(bank.balance(&payer_card).await.unwrap(), 244);
     }
 
     #[test]

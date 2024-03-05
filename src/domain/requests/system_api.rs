@@ -5,6 +5,7 @@ use crate::domain::card_number::CardNumber;
 
 #[derive(Deserialize)]
 pub struct AddAccountRequest {
+    pub username: String,
     pub password: Secret<String>,
 }
 

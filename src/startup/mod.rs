@@ -40,10 +40,14 @@ impl Application {
 
         // Notificator is mpsc::Receiver which is notified
         // when there are new bank request.
-        let bank = Bank::new(
-            &config.terminal_settings.password,
-            &config.bank_username,
-        );
+        let bank = match config.data_backend_type {
+            crate::config::DataBackendType::Pg => {
+                Bank::new::<crate::bank::memory::MemoryStorage>(&config)
+            }
+            crate::config::DataBackendType::Mem => {
+                Bank::new::<crate::bank::memory::MemoryStorage>(&config)
+            }
+        };
 
         let app_state = AppState {
             bank,

@@ -62,21 +62,17 @@ where
         Box::pin(async move {
             let state = state;
             match credentials {
-                Ok(cred) => {
-                    let authorize_system =
-                        state.bank.handler().await.authorize_system(cred);
-                    match authorize_system {
-                        Ok(()) => {
-                            tracing::info!("Basic auth passed");
-                            let response: Response = future.await?;
-                            Ok(response)
-                        }
-                        Err(e) => {
-                            tracing::info!("Failed to authorize: {}", e);
-                            Ok(StatusCode::UNAUTHORIZED.into_response())
-                        }
+                Ok(cred) => match state.bank.authorize_system(cred).await {
+                    Ok(()) => {
+                        tracing::info!("Basic auth passed");
+                        let response: Response = future.await?;
+                        Ok(response)
                     }
-                }
+                    Err(e) => {
+                        tracing::info!("Failed to authorize: {}", e);
+                        Ok(StatusCode::UNAUTHORIZED.into_response())
+                    }
+                },
                 Err(e) => {
                     tracing::error!("Failed to authorize: {e}");
                     Ok(StatusCode::UNAUTHORIZED.into_response())
