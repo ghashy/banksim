@@ -356,6 +356,53 @@ where C : GenericClient
         res.map(| row | (self.mapper) ((self.extractor) (& row)))) .into_stream() ;
         Ok(it)
     }
+}#[derive(serde::Serialize, Debug, Clone, PartialEq, )] pub struct GetAccounts
+{ pub username : String,pub card_number : String,pub is_existing : bool,pub balance : rust_decimal::Decimal,pub tokens : Vec<Option<String>>,}pub struct GetAccountsBorrowed < 'a >
+{ pub username : &'a str,pub card_number : &'a str,pub is_existing : bool,pub balance : rust_decimal::Decimal,pub tokens : cornucopia_async::ArrayIterator<'a, Option<&'a str>>,} impl < 'a > From < GetAccountsBorrowed <
+'a >> for GetAccounts
+{
+    fn
+    from(GetAccountsBorrowed { username,card_number,is_existing,balance,tokens,} : GetAccountsBorrowed < 'a >)
+    -> Self { Self { username: username.into(),card_number: card_number.into(),is_existing,balance,tokens: tokens.map(|v| v.map(|v| v.into())).collect(),} }
+}pub struct GetAccountsQuery < 'a, C : GenericClient, T, const N : usize >
+{
+    client : & 'a  C, params :
+    [& 'a (dyn postgres_types :: ToSql + Sync) ; N], stmt : & 'a mut cornucopia_async
+    :: private :: Stmt, extractor : fn(& tokio_postgres :: Row) -> GetAccountsBorrowed,
+    mapper : fn(GetAccountsBorrowed) -> T,
+} impl < 'a, C, T : 'a, const N : usize > GetAccountsQuery < 'a, C, T, N >
+where C : GenericClient
+{
+    pub fn map < R > (self, mapper : fn(GetAccountsBorrowed) -> R) -> GetAccountsQuery
+    < 'a, C, R, N >
+    {
+        GetAccountsQuery
+        {
+            client : self.client, params : self.params, stmt : self.stmt,
+            extractor : self.extractor, mapper,
+        }
+    } pub async fn one(self) -> Result < T, tokio_postgres :: Error >
+    {
+        let stmt = self.stmt.prepare(self.client) .await ? ; let row =
+        self.client.query_one(stmt, & self.params) .await ? ;
+        Ok((self.mapper) ((self.extractor) (& row)))
+    } pub async fn all(self) -> Result < Vec < T >, tokio_postgres :: Error >
+    { self.iter() .await ?.try_collect().await } pub async fn opt(self) -> Result
+    < Option < T >, tokio_postgres :: Error >
+    {
+        let stmt = self.stmt.prepare(self.client) .await ? ;
+        Ok(self.client.query_opt(stmt, & self.params) .await
+        ?.map(| row | (self.mapper) ((self.extractor) (& row))))
+    } pub async fn iter(self,) -> Result < impl futures::Stream < Item = Result
+    < T, tokio_postgres :: Error >> + 'a, tokio_postgres :: Error >
+    {
+        let stmt = self.stmt.prepare(self.client) .await ? ; let it =
+        self.client.query_raw(stmt, cornucopia_async :: private ::
+        slice_iter(& self.params)) .await ?
+        .map(move | res |
+        res.map(| row | (self.mapper) ((self.extractor) (& row)))) .into_stream() ;
+        Ok(it)
+    }
 }pub fn accounts_count() -> AccountsCountStmt
 { AccountsCountStmt(cornucopia_async :: private :: Stmt :: new("SELECT COUNT(*)
 FROM accounts")) } pub
@@ -484,8 +531,8 @@ GetAccountByToken, 1 >
 } }pub fn get_account_balance() -> GetAccountBalanceStmt
 { GetAccountBalanceStmt(cornucopia_async :: private :: Stmt :: new("SELECT COALESCE(SUM(recv.amount), 0) - COALESCE(SUM(spnd.amount), 0) AS balance
 FROM accounts a
-LEFT JOIN transactions recv ON a.id = recv.sender
-LEFT JOIN transactions spnd ON a.id = spnd.recipient
+LEFT JOIN transactions recv ON a.id = recv.recipient
+LEFT JOIN transactions spnd ON a.id = spnd.sender
 WHERE a.card_number = $1")) } pub
 struct GetAccountBalanceStmt(cornucopia_async :: private :: Stmt) ; impl
 GetAccountBalanceStmt { pub fn bind < 'a, C : GenericClient, T1 : cornucopia_async::StringSql,>
@@ -522,6 +569,29 @@ ListAccountTransactions, 1 >
     {
         client, params : [card_number,], stmt : & mut self.0, extractor :
         | row | { ListAccountTransactionsBorrowed { amount : row.get(0),created_at : row.get(1),sender_username : row.get(2),sender_card_number : row.get(3),sender_is_existing : row.get(4),recipient_username : row.get(5),recipient_card_number : row.get(6),recipient_is_existing : row.get(7),} }, mapper : | it | { <ListAccountTransactions>::from(it) },
+    }
+} }pub fn get_accounts() -> GetAccountsStmt
+{ GetAccountsStmt(cornucopia_async :: private :: Stmt :: new("SELECT
+    a.username,
+    a.card_number,
+    a.is_existing,
+    COALESCE(SUM(recv.amount), 0) - COALESCE(SUM(spnd.amount), 0) AS balance,
+    ARRAY_AGG(t.token) AS tokens
+FROM accounts a
+LEFT JOIN transactions recv ON a.id = recv.recipient
+LEFT JOIN transactions spnd ON a.id = spnd.sender
+LEFT JOIN tokens t ON a.id = t.account
+GROUP BY a.username, a.card_number, a.is_existing")) } pub
+struct GetAccountsStmt(cornucopia_async :: private :: Stmt) ; impl
+GetAccountsStmt { pub fn bind < 'a, C : GenericClient, >
+(& 'a mut self, client : & 'a  C,
+) -> GetAccountsQuery < 'a, C,
+GetAccounts, 0 >
+{
+    GetAccountsQuery
+    {
+        client, params : [], stmt : & mut self.0, extractor :
+        | row | { GetAccountsBorrowed { username : row.get(0),card_number : row.get(1),is_existing : row.get(2),balance : row.get(3),tokens : row.get(4),} }, mapper : | it | { <GetAccounts>::from(it) },
     }
 } }pub fn create_transaction() -> CreateTransactionStmt
 { CreateTransactionStmt(cornucopia_async :: private :: Stmt :: new("INSERT INTO transactions(sender, recipient, amount)

@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use anyhow::Context;
 use argon2::password_hash::SaltString;
 use argon2::PasswordHash;
@@ -9,6 +10,7 @@ use deadpool::managed::Object;
 use deadpool_postgres::Manager;
 use deadpool_postgres::ManagerConfig;
 use deadpool_postgres::Pool;
+use futures::future::try_join_all;
 use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
@@ -38,6 +40,7 @@ pub struct PostgresStorage {
     pg_pool: Pool,
     notifier: Sender<()>,
     argon2_obj: argon2::Argon2<'static>,
+    settings: Settings,
 }
 
 impl PostgresStorage {
@@ -245,6 +248,7 @@ impl InitBankDataBackend for PostgresStorage {
             pg_pool,
             notifier: tx,
             argon2_obj,
+            settings: settings.clone(),
         })
     }
 }
@@ -320,7 +324,7 @@ impl BankDataBackend for PostgresStorage {
             .get()
             .await
             .context("Failed to get a pg client from pg pool")?;
-        if bank_queries::is_account_exists()
+        if !bank_queries::is_account_exists()
             .bind(&db_client, &card.as_ref())
             .one()
             .await
@@ -343,26 +347,53 @@ impl BankDataBackend for PostgresStorage {
         Vec<crate::domain::responses::system_api::Account>,
         BankOperationError,
     > {
-        // let db_client = self
-        //     .pg_pool
-        //     .get()
-        //     .await
-        //     .context("Failed to get a pg client from pg pool")?;
-        // let accounts = bank_queries::get_accounts()
-        //     .bind(&db_client)
-        //     .all()
-        //     .await
-        //     .context("Failed to insert a new account to pg")?
-        //     .into_iter()
-        //     .map(|acc| crate::domain::responses::system_api::Account {
-        //         card_number: acc.card_number.parse().unwrap(),
-        //         balance: acc.balance.to_i64().unwrap(),
-        //         transactions: todo!(),
-        //         exists: todo!(),
-        //         tokens: todo!(),
-        //         username: todo!(),
-        //     });
-        Ok(Vec::new())
+        let db_client = self
+            .pg_pool
+            .get()
+            .await
+            .context("Failed to get a pg client from pg pool")?;
+        let accounts = bank_queries::get_accounts()
+            .bind(&db_client)
+            .all()
+            .await
+            .context("Failed to insert a new account to pg")?
+            .into_iter()
+            .map(|acc| async move {
+                let card_number = acc.card_number.parse()?;
+                Ok::<
+                    crate::domain::responses::system_api::Account,
+                    BankOperationError,
+                >(
+                    crate::domain::responses::system_api::Account {
+                        card_number,
+                        balance: acc.balance.to_i64().ok_or(
+                            BankOperationError::InternalError(anyhow!(
+                                "Failed to parse Decimal into i64"
+                            )),
+                        )?,
+                        transactions: Vec::new(),
+                        exists: acc.is_existing,
+                        tokens: acc.tokens.into_iter().flatten().collect(),
+                        username: acc.username,
+                    },
+                )
+            });
+        let accounts = try_join_all(accounts).await?;
+        let mut result = Vec::with_capacity(accounts.len());
+        for mut account in accounts.into_iter() {
+            // Skip store and emission accounts
+            if account.username.eq(&self.settings.bank_username)
+                || account.username.eq("store")
+            {
+                continue;
+            }
+            let transactions = self
+                .account_transactions(&db_client, &account.card_number)
+                .await?;
+            account.transactions = transactions;
+            result.push(account);
+        }
+        Ok(result)
     }
 
     async fn authorize_account(
@@ -460,10 +491,22 @@ impl BankDataBackend for PostgresStorage {
             .get()
             .await
             .context("Failed to get a pg client from pg pool")?;
-        let _ = bank_queries::create_transaction()
+        match bank_queries::create_transaction()
             .bind(&db_client, &sender.as_ref(), &recipient.as_ref(), &amount)
             .await
-            .context("Failed to insert a new transaction in pg")?;
+        {
+            Ok(_) => (),
+            Err(e) => {
+                tracing::error!("Failed to create transaction: {e}");
+                if let Some(db_error) = e.as_db_error() {
+                    if db_error.message().eq("Not enough funds") {
+                        return Err(BankOperationError::NotEnoughFunds);
+                    }
+                }
+                return Err(BankOperationError::UnexpectedError);
+            }
+        }
+
         self.notify();
         Ok(())
     }

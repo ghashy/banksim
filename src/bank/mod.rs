@@ -36,6 +36,8 @@ time::serde::format_description!(iso_format, OffsetDateTime, SIMPLE_ISO);
 
 #[derive(thiserror::Error)]
 pub enum BankOperationError {
+    #[error("Unexpected error")]
+    UnexpectedError,
     #[error("Internal error")]
     InternalError(#[from] anyhow::Error),
     #[error("No account")]
