@@ -24,7 +24,7 @@ impl WebSocketAppender {
     pub async fn add_subscriber(&self, fut: UpgradeFut) {
         let (tx, rx) = mpsc::channel(100);
         let id = uuid::Uuid::new_v4();
-        eprintln!("New subscriber with id: {id}");
+        eprintln!("New traces subscriber with id: {id}");
 
         let subscribers = self.subscribers.clone();
         // Spawn task for new web socket subscriber
