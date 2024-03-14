@@ -249,7 +249,8 @@ pub async fn trigger_card_token_registration(
         }
     };
 
-    let notification = RegisterCardTokenOperationResult::success(token);
+    let notification =
+        RegisterCardTokenOperationResult::success(token, req.req_id);
     // Notify on success registration and remove request from active list
     state
         .interaction_sessions
