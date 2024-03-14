@@ -571,17 +571,27 @@ ListAccountTransactions, 1 >
         | row | { ListAccountTransactionsBorrowed { amount : row.get(0),created_at : row.get(1),sender_username : row.get(2),sender_card_number : row.get(3),sender_is_existing : row.get(4),recipient_username : row.get(5),recipient_card_number : row.get(6),recipient_is_existing : row.get(7),} }, mapper : | it | { <ListAccountTransactions>::from(it) },
     }
 } }pub fn get_accounts() -> GetAccountsStmt
-{ GetAccountsStmt(cornucopia_async :: private :: Stmt :: new("SELECT
+{ GetAccountsStmt(cornucopia_async :: private :: Stmt :: new("WITH received_amount AS (
+    SELECT recipient, COALESCE(SUM(amount), 0) AS received_total
+    FROM transactions
+    GROUP BY recipient
+),
+spent_amount AS (
+    SELECT sender, COALESCE(SUM(amount), 0) AS spent_total
+    FROM transactions
+    GROUP BY sender
+)
+SELECT
     a.username,
     a.card_number,
     a.is_existing,
-    COALESCE(SUM(recv.amount), 0) - COALESCE(SUM(spnd.amount), 0) AS balance,
+    COALESCE(ra.received_total, 0) - COALESCE(sa.spent_total, 0) AS balance,
     ARRAY_AGG(t.token) AS tokens
 FROM accounts a
-LEFT JOIN transactions recv ON a.id = recv.recipient
-LEFT JOIN transactions spnd ON a.id = spnd.sender
+LEFT JOIN received_amount ra ON a.id = ra.recipient
+LEFT JOIN spent_amount sa ON a.id = sa.sender
 LEFT JOIN tokens t ON a.id = t.account
-GROUP BY a.username, a.card_number, a.is_existing")) } pub
+GROUP BY a.username, a.card_number, a.is_existing, ra.received_total, sa.spent_total")) } pub
 struct GetAccountsStmt(cornucopia_async :: private :: Stmt) ; impl
 GetAccountsStmt { pub fn bind < 'a, C : GenericClient, >
 (& 'a mut self, client : & 'a  C,

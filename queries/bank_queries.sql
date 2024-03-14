@@ -67,17 +67,27 @@ WHERE sender_account.card_number = :card_number OR recipient_account.card_number
 
 
 --! get_accounts : (tokens[?])
+WITH received_amount AS (
+    SELECT recipient, COALESCE(SUM(amount), 0) AS received_total
+    FROM transactions
+    GROUP BY recipient
+),
+spent_amount AS (
+    SELECT sender, COALESCE(SUM(amount), 0) AS spent_total
+    FROM transactions
+    GROUP BY sender
+)
 SELECT
     a.username,
     a.card_number,
     a.is_existing,
-    COALESCE(SUM(recv.amount), 0) - COALESCE(SUM(spnd.amount), 0) AS balance,
+    COALESCE(ra.received_total, 0) - COALESCE(sa.spent_total, 0) AS balance,
     ARRAY_AGG(t.token) AS tokens
 FROM accounts a
-LEFT JOIN transactions recv ON a.id = recv.recipient
-LEFT JOIN transactions spnd ON a.id = spnd.sender
+LEFT JOIN received_amount ra ON a.id = ra.recipient
+LEFT JOIN spent_amount sa ON a.id = sa.sender
 LEFT JOIN tokens t ON a.id = t.account
-GROUP BY a.username, a.card_number, a.is_existing;
+GROUP BY a.username, a.card_number, a.is_existing, ra.received_total, sa.spent_total;
 
 --! create_transaction
 INSERT INTO transactions(sender, recipient, amount)
