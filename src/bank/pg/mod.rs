@@ -393,6 +393,7 @@ impl BankDataBackend for PostgresStorage {
             account.transactions = transactions;
             result.push(account);
         }
+        result.sort_by(|acc1, acc2| acc1.username.cmp(&acc2.username));
         Ok(result)
     }
 
@@ -606,8 +607,7 @@ impl BankDataBackend for PostgresStorage {
             .context("Failed to get a pg client from pg pool")?;
 
         let emission_account = self.emission_account(&db_client).await?;
-        self.balance(&db_client, &emission_account.card_number)
-            .await
+        self.balance(&db_client, &emission_account.card_number).await
     }
 
     async fn new_card_token(
@@ -664,14 +664,12 @@ pub async fn hash_password_blocking(
     argon2_obj: argon2::Argon2<'static>,
     password: Secret<String>,
 ) -> Result<String, BankOperationError> {
-    eprintln!("INPUT: {}", password.expose_secret());
     let hash = spawn_blocking_with_tracing(move || {
         hash_password(&password, argon2_obj)
     })
     .await
     .context("Failed to join thread")
     .map_err(BankOperationError::InternalError)??;
-    eprintln!("HASH: {}", hash);
     Ok(hash)
 }
 

@@ -112,10 +112,7 @@ async fn new_transaction(
     State(state): State<AppState>,
     Json(req): Json<NewTransactionRequest>,
 ) -> Result<StatusCode, SystemApiError> {
-    state
-        .bank
-        .new_transaction(&req.from, &req.to, req.amount)
-        .await?;
+    state.bank.new_transaction(&req.from, &req.to, req.amount).await?;
     Ok(StatusCode::OK)
 }
 
@@ -144,13 +141,7 @@ async fn store_balance(
 async fn store_card(
     State(state): State<AppState>,
 ) -> Result<String, SystemApiError> {
-    Ok(state
-        .bank
-        .get_store_account()
-        .await?
-        .card()
-        .as_ref()
-        .to_string())
+    Ok(state.bank.get_store_account().await?.card().as_ref().to_string())
 }
 
 #[tracing::instrument(name = "Register a ws accounts subscriber", skip_all)]
