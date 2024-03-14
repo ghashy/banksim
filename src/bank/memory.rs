@@ -263,16 +263,7 @@ impl BankDataBackend for MemoryStorage {
         let guard = self.lock().await;
 
         let account = self.find_account(&guard, card)?;
-        if !account
-            .password
-            .expose_secret()
-            .eq(password.expose_secret())
-        {
-            eprintln!(
-                "given: {}, need: {}",
-                password.expose_secret(),
-                account.password.expose_secret()
-            );
+        if !account.password.expose_secret().eq(password.expose_secret()) {
             Err(BankOperationError::NotAuthorized)
         } else {
             Ok(account.clone())
