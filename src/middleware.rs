@@ -65,12 +65,12 @@ where
             match credentials {
                 Ok(cred) => match state.bank.authorize_system(cred).await {
                     Ok(()) => {
-                        tracing::info!("Basic auth passed");
+                        tracing::trace!("Basic auth passed");
                         let response: Response = future.await?;
                         Ok(response)
                     }
                     Err(e) => {
-                        tracing::info!("Failed to authorize: {:?}", e.source());
+                        tracing::warn!("Failed to authorize: {:?}", e.source());
                         Ok(StatusCode::UNAUTHORIZED.into_response())
                     }
                 },
