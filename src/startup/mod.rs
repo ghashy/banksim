@@ -5,14 +5,11 @@ use axum::serve::Serve;
 use axum::Router;
 use tokio::net::TcpListener;
 
-use crate::interaction_sessions::InteractionSessions;
-use crate::routes::html_pages_and_triggers::html_pages_and_triggers_router;
+use crate::routes::html_pages_and_triggers::pages_and_triggers_router;
+use crate::routes::session::session_router;
+use crate::session::InteractionSessions;
 use crate::ws_tracing_subscriber::WebSocketAppender;
-use crate::{
-    bank::Bank,
-    config::Settings,
-    routes::{api::api_router, system::system_router},
-};
+use crate::{bank::Bank, config::Settings, routes::system::system_router};
 
 type Server = Serve<IntoMakeService<Router>, Router>;
 
@@ -25,8 +22,9 @@ pub struct Application {
 pub struct AppState {
     pub settings: Arc<Settings>,
     pub bank: Bank,
-    pub interaction_sessions: InteractionSessions,
+    pub sessions: InteractionSessions,
     pub ws_appender: WebSocketAppender,
+    pub http_client: reqwest::Client,
 }
 
 impl Application {
@@ -52,13 +50,14 @@ impl Application {
         let app_state = AppState {
             bank,
             settings: Arc::new(config),
-            interaction_sessions: InteractionSessions::new(),
+            sessions: InteractionSessions::new(),
             ws_appender,
+            http_client: reqwest::Client::new(),
         };
 
-        let app = html_pages_and_triggers_router()
+        let app = pages_and_triggers_router()
             .with_state(app_state.clone())
-            .nest("/api", api_router(app_state.clone()))
+            .nest("/session", session_router(app_state.clone()))
             .nest("/system", system_router(app_state.clone()));
 
         let server = axum::serve(listener, app.into_make_service());
@@ -70,9 +69,7 @@ impl Application {
     }
 
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
-        self.server
-            .with_graceful_shutdown(shutdown_signal())
-            .await?;
+        self.server.with_graceful_shutdown(shutdown_signal()).await?;
         Ok(())
     }
 }

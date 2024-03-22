@@ -64,6 +64,29 @@ impl std::fmt::Debug for BankOperationError {
     }
 }
 
+impl BankOperationError {
+    pub fn str_reason_for_client(&self) -> String {
+        match self {
+            BankOperationError::BadTransaction => "bad_transaction".to_string(),
+            BankOperationError::BadOperation(_) => "bad_operation".to_string(),
+            BankOperationError::InternalError(_)
+            | Self::UnexpectedError
+            | Self::MutexLockError(_) => "internal_error".to_string(),
+            BankOperationError::AccountNotFound => {
+                "account_not_found".to_string()
+            }
+            BankOperationError::TokenNotFound => "token_not_found".to_string(),
+            BankOperationError::AccountIsDeleted => {
+                "account_is_deleted".to_string()
+            }
+            BankOperationError::NotEnoughFunds => {
+                "not_enough_funds".to_string()
+            }
+            BankOperationError::NotAuthorized => "not_authorized".to_string(),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Bank {
     inner: Arc<dyn BankDataBackend + Send + Sync>,
@@ -202,9 +225,7 @@ mod tests {
                 .build()
                 .unwrap();
 
-        bank.new_split_transaction(&payer_card, 256, &bfc)
-            .await
-            .unwrap();
+        bank.new_split_transaction(&payer_card, 256, &bfc).await.unwrap();
 
         assert_eq!(
             bank.balance(&bank.get_store_account().await.unwrap().card())

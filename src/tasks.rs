@@ -1,10 +1,12 @@
 use time::OffsetDateTime;
+use tokio::sync::oneshot::Receiver;
 use uuid::Uuid;
 
 use crate::RemovableById;
 
-pub fn wait_and_remove(
-    object: impl RemovableById + Send + 'static,
+pub fn wait_hour_and_remove(
+    mut object: impl RemovableById + Send + 'static,
+    notifier: Receiver<()>,
     id: Uuid,
     created_at: OffsetDateTime,
 ) {
@@ -12,20 +14,26 @@ pub fn wait_and_remove(
         let interval =
             (created_at + time::Duration::hours(1)) - OffsetDateTime::now_utc();
         // Sleeping
-        match interval.try_into() {
-            Ok(duration) => {
-                tokio::time::sleep(duration).await;
-            }
+        let duration = match interval.try_into() {
+            Ok(duration) => duration,
             Err(e) => {
-                tracing::error!("Failed to calculate std::time::Duration from time::Duration: {e}")
+                tracing::error!("Failed to calculate std::time::Duration from time::Duration: {e}");
+                return;
+            }
+        };
+        tokio::select! {
+            _ = tokio::time::sleep(duration) => {
+                tracing::info!("Task on watching {id} time is out, removing!");
+            }
+            _ = notifier => {
+                tracing::info!("Task on watching {id} entity got removing request!");
             }
         }
+
         // Removing payment
         match object.remove(id) {
             Ok(()) => {
-                tracing::info!(
-                    "Object with id: {id} is removed after {interval} time!"
-                )
+                tracing::info!("Object with id: {id} is removed!")
             }
             Err(e) => {
                 tracing::error!(

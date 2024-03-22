@@ -1,15 +1,15 @@
 mod bank;
 mod config;
 mod html_gen;
-mod interaction_sessions;
 mod middleware;
 mod routes;
 mod startup;
 
+pub mod cornucopia;
 pub mod domain;
+pub mod session;
 pub mod tasks;
 pub mod ws_tracing_subscriber;
-pub mod cornucopia;
 
 use std::error::Error;
 
@@ -31,5 +31,6 @@ pub fn error_chain_fmt(
 }
 
 pub trait RemovableById {
-    fn remove(&self, id: Uuid) -> Result<(), Box<dyn Error>>;
+    fn remove(&mut self, id: Uuid) -> Result<(), Box<dyn Error>>;
+    fn exists(&self, id: Uuid) -> Result<bool, Box<dyn Error>>;
 }
