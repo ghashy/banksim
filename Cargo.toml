@@ -26,11 +26,11 @@ tokio = { version = "1.36.0", features = [
   "rt-multi-thread",
   "signal",
 ] }
-reqwest = { version = "0.11.24", default-features = false, features = [
+reqwest = { version = "0.12.0", default-features = false, features = [
   "json",
 ] }
 
-fastwebsockets = { version = "0.7.0", features = ["upgrade", "with_axum"] }
+fastwebsockets = { version = "0.7.1", features = ["upgrade", "with_axum"] }
 
 # Serialization-related dependencies
 serde = { version = "1.0.197", features = ["derive"] }
@@ -46,13 +46,14 @@ tracing-subscriber = { version = "0.3.18", features = [
 tracing-appender = "0.2.3"
 
 # Utility and miscellaneous dependencies
+statig = { version = "0.3.0", features = ["async"] }
 futures = "0.3.30"
-anyhow = "1.0.80"
-config = "0.13.4"
-uuid = { version = "1.7.0", features = ["v4", "serde"] }
+anyhow = "1.0.81"
+config = "0.14.0"
+uuid = { version = "1.8.0", features = ["v4", "serde"] }
 url = { version = "2.5.0", features = ["serde"] }
 time = { version = "0.3.34", features = ["local-offset", "macros", "parsing", "serde", "formatting"] }
-thiserror = "1.0.56"
+thiserror = "1.0.58"
 askama = "0.12.1"
 rand = { version = "0.8.5", features = ["std_rng"] }
 rust_decimal = { version = "1.34.3", features = ["db-postgres"] }
@@ -62,7 +63,7 @@ rust_decimal = { version = "1.34.3", features = ["db-postgres"] }
 secrecy = { version = "0.8.0", features = ["serde"] }
 sha2 = "0.10.8"
 hex = "0.4.3"
-base64 = "0.21.7"
+base64 = "0.22.0"
 argon2 = { version = "0.5.3", features = ["std"] }
 
 [dev-dependencies]
