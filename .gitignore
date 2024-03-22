@@ -5,5 +5,5 @@ Cargo.lock
 /banksim.xcodeproj
 /secrets
 /scripts
-/.idea
+/examples/banksim_django/db.sqlite3
 refinery.toml
