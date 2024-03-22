@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# banksim-api = { path = "../airactions/backends/banksim-api" }
 banksim-api = { git = "https://github.com/ghashy/airactions.git" }
 
 # Database-related dependencies
