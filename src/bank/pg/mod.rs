@@ -20,6 +20,7 @@ use std::sync::Arc;
 use tokio::sync::watch::{Receiver, Sender};
 use tokio::task::JoinHandle;
 use tokio_postgres::NoTls;
+use tracing::Level;
 
 use crate::config::DatabaseSettings;
 use crate::cornucopia::queries::bank_queries;
@@ -96,7 +97,9 @@ impl PostgresStorage {
     /// after every bank lock
     fn notify(&self) {
         if let Err(e) = self.notifier.send(()) {
-            tracing::error!("Failed to send bank lock notification: {e}");
+            tracing::warn!(
+                "Failed to send bank state updated notification: {e}"
+            );
         }
     }
 
@@ -239,6 +242,7 @@ impl InitBankDataBackend for PostgresStorage {
                     )
                     .await
                     .unwrap();
+                tracing::info!("Successfully created system accounts!");
             } else {
                 tracing::info!("System accounts already exists in db!");
             }
@@ -413,7 +417,7 @@ impl BankDataBackend for PostgresStorage {
             .bind(&db_client, &card.as_ref())
             .one()
             .await
-            .context("Failed to get emission account from pg")?;
+            .context("Failed to get account from pg")?;
 
         verify_password_hash_blocking(
             Secret::new(account.password_hash.clone()),
@@ -481,6 +485,10 @@ impl BankDataBackend for PostgresStorage {
         self.balance(&db_client, card).await
     }
 
+    #[tracing::instrument(
+        name = "Try to create new simple transaction",
+        skip(self)
+    )]
     async fn new_transaction(
         &self,
         sender: &CardNumber,
@@ -512,6 +520,7 @@ impl BankDataBackend for PostgresStorage {
         Ok(())
     }
 
+    #[tracing::instrument(name = "Try create new split transaction", skip_all)]
     async fn new_split_transaction(
         &self,
         sender: &CardNumber,
@@ -697,7 +706,7 @@ fn hash_password(
         .to_string())
 }
 
-#[tracing::instrument(name = "Verify password hash", skip_all)]
+#[tracing::instrument(level = Level::TRACE, name = "Verify password hash", skip_all)]
 fn verify_password_hash(
     expected_password_hash: Secret<String>,
     password_candidate: Secret<String>,
