@@ -32,11 +32,22 @@ BEGIN
             RETURN NEW;
         END IF;
 
-        SELECT COALESCE(SUM(recv.amount), 0) - COALESCE(SUM(spnd.amount), 0) INTO balance
+        WITH received_amount AS (
+            SELECT recipient, COALESCE(SUM(amount), 0) AS received_total
+            FROM transactions
+            GROUP BY recipient
+        ),
+        spent_amount AS (
+            SELECT sender, COALESCE(SUM(amount), 0) AS spent_total
+            FROM transactions
+            GROUP BY sender
+        )
+        SELECT ra.received_total - sa.spent_total INTO balance
         FROM accounts a
-        LEFT JOIN transactions recv ON a.id = recv.recipient
-        LEFT JOIN transactions spnd ON a.id = spnd.sender
+        LEFT JOIN received_amount ra ON a.id = ra.recipient
+        LEFT JOIN spent_amount sa ON a.id = sa.sender
         WHERE a.id = NEW.sender;
+
 
         IF balance < NEW.amount THEN
             RAISE EXCEPTION 'Not enough funds';

@@ -529,10 +529,20 @@ GetAccountByToken, 1 >
         | row | { GetAccountByTokenBorrowed { username : row.get(0),card_number : row.get(1),is_existing : row.get(2),} }, mapper : | it | { <GetAccountByToken>::from(it) },
     }
 } }pub fn get_account_balance() -> GetAccountBalanceStmt
-{ GetAccountBalanceStmt(cornucopia_async :: private :: Stmt :: new("SELECT COALESCE(SUM(recv.amount), 0) - COALESCE(SUM(spnd.amount), 0) AS balance
+{ GetAccountBalanceStmt(cornucopia_async :: private :: Stmt :: new("WITH received_amount AS (
+    SELECT recipient, COALESCE(SUM(amount), 0) AS received_total
+    FROM transactions
+    GROUP BY recipient
+),
+spent_amount AS (
+    SELECT sender, COALESCE(SUM(amount), 0) AS spent_total
+    FROM transactions
+    GROUP BY sender
+)
+SELECT COALESCE(ra.received_total, 0) - COALESCE(sa.spent_total, 0) AS balance
 FROM accounts a
-LEFT JOIN transactions recv ON a.id = recv.recipient
-LEFT JOIN transactions spnd ON a.id = spnd.sender
+LEFT JOIN received_amount ra ON a.id = ra.recipient
+LEFT JOIN spent_amount sa ON a.id = sa.sender
 WHERE a.card_number = $1")) } pub
 struct GetAccountBalanceStmt(cornucopia_async :: private :: Stmt) ; impl
 GetAccountBalanceStmt { pub fn bind < 'a, C : GenericClient, T1 : cornucopia_async::StringSql,>

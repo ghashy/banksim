@@ -44,10 +44,20 @@ LEFT JOIN accounts a ON tokens.account = a.id
 WHERE  tokens.token = :token;
 
 --! get_account_balance
-SELECT COALESCE(SUM(recv.amount), 0) - COALESCE(SUM(spnd.amount), 0) AS balance
+WITH received_amount AS (
+    SELECT recipient, COALESCE(SUM(amount), 0) AS received_total
+    FROM transactions
+    GROUP BY recipient
+),
+spent_amount AS (
+    SELECT sender, COALESCE(SUM(amount), 0) AS spent_total
+    FROM transactions
+    GROUP BY sender
+)
+SELECT COALESCE(ra.received_total, 0) - COALESCE(sa.spent_total, 0) AS balance
 FROM accounts a
-LEFT JOIN transactions recv ON a.id = recv.recipient
-LEFT JOIN transactions spnd ON a.id = spnd.sender
+LEFT JOIN received_amount ra ON a.id = ra.recipient
+LEFT JOIN spent_amount sa ON a.id = sa.sender
 WHERE a.card_number = :card_number;
 
 --! list_account_transactions
