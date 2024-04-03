@@ -3,7 +3,9 @@ use std::sync::Arc;
 use axum::routing::IntoMakeService;
 use axum::serve::Serve;
 use axum::Router;
+use http::Method;
 use tokio::net::TcpListener;
+use tower_http::cors::{Any, CorsLayer};
 
 use crate::routes::html_pages_and_triggers::pages_and_triggers_router;
 use crate::routes::session::session_router;
@@ -55,10 +57,17 @@ impl Application {
             http_client: reqwest::Client::new(),
         };
 
+        let cors = CorsLayer::new()
+            // allow `GET` and `POST` when accessing the resource
+            .allow_methods([Method::GET, Method::POST])
+            // allow requests from any origin
+            .allow_origin(Any);
+
         let app = pages_and_triggers_router()
-            .with_state(app_state.clone())
-            .nest("/session", session_router(app_state.clone()))
-            .nest("/system", system_router(app_state.clone()));
+            .nest("/session", session_router())
+            .nest("/system", system_router(app_state.clone()))
+            .with_state(app_state)
+            .layer(cors);
 
         let server = axum::serve(listener, app.into_make_service());
 

@@ -18,7 +18,7 @@ use crate::tasks::wait_hour_and_remove;
 
 // ───── Handlers ─────────────────────────────────────────────────────────── //
 
-pub fn init_router(state: AppState) -> Router {
+pub fn init_router() -> Router<AppState> {
     Router::new()
         .route(
             "/payment",
@@ -36,7 +36,6 @@ pub fn init_router(state: AppState) -> Router {
             ),
         )
         .route("/MakePayment", routing::post(make_payment))
-        .with_state(state)
 }
 
 #[tracing::instrument(name = "Init session", skip_all)]
@@ -65,7 +64,10 @@ where
     };
 
     // Authorize request
-    if req.validate_token(&state.settings.terminal_settings.password).is_err() {
+    if req
+        .validate_token(&state.settings.terminal_settings.password)
+        .is_err()
+    {
         tracing::warn!("Unauthorized request");
         return Json(Response::operation_error(
             OperationError::NotAuthorizedRequest,
@@ -120,7 +122,10 @@ async fn make_payment(
     Json(req): Json<MakePaymentRequest>,
 ) -> Json<MakePaymentResponse> {
     // Authorize request
-    if req.validate_token(&state.settings.terminal_settings.password).is_err() {
+    if req
+        .validate_token(&state.settings.terminal_settings.password)
+        .is_err()
+    {
         tracing::warn!("Unauthorized request");
         return Json(MakePaymentResponse::err("Unauthorized".to_string()));
     }

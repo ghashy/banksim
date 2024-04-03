@@ -1,4 +1,5 @@
 use axum::extract::State;
+use axum::http::Uri;
 use axum::routing;
 use axum::Json;
 use axum::Router;
@@ -32,18 +33,18 @@ struct CancelWebhook;
 
 // ───── Handlers ─────────────────────────────────────────────────────────── //
 
-pub fn session_router(state: AppState) -> Router {
+pub fn session_router() -> Router<AppState> {
     Router::new()
         .route("/confirm", routing::post(webhook::<ConfirmWebhook>))
         .route("/capture", routing::post(webhook::<CaptureWebhook>))
         .route("/cancel", routing::post(webhook::<CancelWebhook>))
-        .with_state(state.clone())
-        .nest("/init", init_router(state))
+        .nest("/init", init_router())
 }
 
-#[tracing::instrument(name = "Webhook request webhook", skip_all, fields(webhook=?req.webhook))]
+#[tracing::instrument(name = "Webhook request", skip_all, fields(uri=?uri))]
 async fn webhook<T>(
     State(state): State<AppState>,
+    uri: Uri,
     Json(req): Json<WebhookRequest>,
 ) -> Result<Json<WebhookResponse>, Json<WebhookResponse>>
 where

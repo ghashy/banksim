@@ -54,7 +54,7 @@ impl IntoResponse for SystemApiError {
 
 // ───── Handlers ─────────────────────────────────────────────────────────── //
 
-pub fn system_router(state: AppState) -> Router {
+pub fn system_router(state: AppState) -> Router<AppState> {
     Router::new()
         .route("/account", routing::post(add_account))
         .route("/account", routing::delete(delete_account))
@@ -67,7 +67,6 @@ pub fn system_router(state: AppState) -> Router {
         .route("/list_transactions", routing::get(list_transactions))
         .route("/subscribe_on_accounts", routing::get(ws_accounts))
         .route("/subscribe_on_traces", routing::get(ws_traces))
-        .with_state(state.clone())
         .layer(BasicAuthLayer { state })
 }
 
@@ -112,7 +111,10 @@ async fn new_transaction(
     State(state): State<AppState>,
     Json(req): Json<NewTransactionRequest>,
 ) -> Result<StatusCode, SystemApiError> {
-    state.bank.new_transaction(&req.from, &req.to, req.amount).await?;
+    state
+        .bank
+        .new_transaction(&req.from, &req.to, req.amount)
+        .await?;
     Ok(StatusCode::OK)
 }
 
@@ -141,7 +143,13 @@ async fn store_balance(
 async fn store_card(
     State(state): State<AppState>,
 ) -> Result<String, SystemApiError> {
-    Ok(state.bank.get_store_account().await?.card().as_ref().to_string())
+    Ok(state
+        .bank
+        .get_store_account()
+        .await?
+        .card()
+        .as_ref()
+        .to_string())
 }
 
 #[tracing::instrument(name = "Register a ws accounts subscriber", skip_all)]
