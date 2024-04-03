@@ -78,7 +78,9 @@ impl Application {
     }
 
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
-        self.server.with_graceful_shutdown(shutdown_signal()).await?;
+        self.server
+            .with_graceful_shutdown(shutdown_signal())
+            .await?;
         Ok(())
     }
 }
