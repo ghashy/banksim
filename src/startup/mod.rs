@@ -9,6 +9,7 @@ use tower_http::cors::{Any, CorsLayer};
 
 use crate::routes::html_pages_and_triggers::pages_and_triggers_router;
 use crate::routes::session::session_router;
+use crate::routes::token::token_router;
 use crate::session::InteractionSessions;
 use crate::ws_tracing_subscriber::WebSocketAppender;
 use crate::{bank::Bank, config::Settings, routes::system::system_router};
@@ -64,6 +65,7 @@ impl Application {
             .allow_origin(Any);
 
         let app = pages_and_triggers_router()
+            .nest("/token", token_router())
             .nest("/session", session_router())
             .nest("/system", system_router(app_state.clone()))
             .with_state(app_state)

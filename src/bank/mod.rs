@@ -122,7 +122,7 @@ pub struct Account {
     card_number: CardNumber,
     #[serde(skip)]
     password: Secret<String>,
-    is_existing: bool,
+    pub is_existing: bool,
 }
 
 impl Account {
@@ -225,7 +225,9 @@ mod tests {
                 .build()
                 .unwrap();
 
-        bank.new_split_transaction(&payer_card, 256, &bfc).await.unwrap();
+        bank.new_split_transaction(&payer_card, 256, &bfc)
+            .await
+            .unwrap();
 
         assert_eq!(
             bank.balance(&bank.get_store_account().await.unwrap().card())
