@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use axum::routing::IntoMakeService;
+use axum::routing::{self, IntoMakeService};
 use axum::serve::Serve;
 use axum::Router;
-use http::Method;
+use http::{Method, StatusCode};
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -68,6 +68,7 @@ impl Application {
             .nest("/token", token_router())
             .nest("/session", session_router())
             .nest("/system", system_router(app_state.clone()))
+            .route("/healthcheck", routing::get(|| async { StatusCode::OK }))
             .with_state(app_state)
             .layer(cors);
 
