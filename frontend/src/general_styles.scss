@@ -1,1 +1,22 @@
 @import "./variables.scss";
+
+@mixin page_padding() {
+  padding: 0 clamp(0px, (100vw - 70rem) / 2, 9999px);
+}
+
+@mixin link_underline() {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -0.625rem;
+  width: 115%;
+  height: 0.375rem;
+  border-radius: 0.375rem 0.375rem 0 0;
+  background-color: $main_light;
+  transition: bottom 0.1s ease-out;
+}
+
+a.active::after {
+  @include link_underline();
+}

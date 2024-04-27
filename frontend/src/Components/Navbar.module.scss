@@ -1,1 +1,69 @@
 @import "../variables.scss";
+@import "../general_styles.scss";
+
+.navbar {
+  @include page_padding;
+  color: $main_light;
+  background-color: $accent;
+  box-shadow: 0 0.25rem 0.25rem rgba($color: $shadow, $alpha: 0.12);
+  overflow-y: hidden;
+}
+
+.content {
+  padding: 2.25rem 1rem 0.625rem;
+}
+
+.header_container {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.h1 {
+  font-size: 1.875rem;
+
+  span {
+    font-weight: 400;
+  }
+}
+
+.info_container {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.info_unit {
+  margin-left: 1em;
+
+  span {
+    font-weight: 400;
+  }
+}
+
+.nav_links {
+  margin-top: 2.125rem;
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.nav_link {
+  position: relative;
+  color: $main_light;
+  text-decoration: none;
+
+  &:not(:last-child) {
+    margin-right: 3.375rem;
+  }
+
+  &::after {
+    @include link_underline;
+    bottom: -1rem;
+  }
+
+  &:hover::after {
+    bottom: -0.625rem;
+  }
+}
