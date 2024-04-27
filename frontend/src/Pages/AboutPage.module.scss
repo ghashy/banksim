@@ -1,0 +1,9 @@
+@import "../general_styles.scss";
+
+.about_page {
+  @include page_padding;
+}
+
+.content {
+  padding: 3.75rem 1rem 0;
+}
