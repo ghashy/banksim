@@ -3,9 +3,9 @@ import { FC } from "react";
 
 const MainPage: FC = () => {
   return (
-    <div className={styles.main_page}>
-      <div>Main page</div>
-    </div>
+    <section className={styles.main_page}>
+      <div className={styles.content}>Main page</div>
+    </section>
   );
 };
 
