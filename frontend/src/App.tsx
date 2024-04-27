@@ -2,6 +2,10 @@ import "./App.scss";
 import { Routes, BrowserRouter, Route } from "react-router-dom";
 import MainLayout from "./Components/MainLayout";
 import MainPage from "./Pages/MainPage";
+import TransactionsPage from "./Pages/TransactionsPage";
+import LogsPage from "./Pages/LogsPage";
+import AboutPage from "./Pages/AboutPage";
+import NotFoundPage from "./Pages/NotFoundPage";
 
 function App() {
   return (
@@ -17,19 +21,19 @@ function App() {
           />
           <Route
             path="transactions"
-            element={<div>transactions</div>}
+            element={<TransactionsPage />}
           />
           <Route
             path="logs"
-            element={<div>Logs</div>}
+            element={<LogsPage />}
           />
           <Route
             path="about"
-            element={<div>About</div>}
+            element={<AboutPage />}
           />
           <Route
             path="*"
-            element={<div>page not found</div>}
+            element={<NotFoundPage />}
           />
         </Route>
       </Routes>
