@@ -25,14 +25,15 @@ const AccountTable: FC = () => {
           />
         ))}
       </div>
-      {checked_items.length !== 0 && (
-        <div
-          className={styles.unselect_all}
-          onClick={() => dispatch(reset_checked_itmes())}
-        >
-          unselect all
-        </div>
-      )}
+      <div
+        className={styles.unselect_all}
+        style={{
+          visibility: `${checked_items.length !== 0 ? "visible" : "hidden"}`,
+        }}
+        onClick={() => dispatch(reset_checked_itmes())}
+      >
+        unselect all
+      </div>
     </div>
   );
 };
