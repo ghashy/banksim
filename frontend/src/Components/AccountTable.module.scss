@@ -1,0 +1,95 @@
+@import "../variables.scss";
+
+@mixin row_container($padding) {
+  padding: $padding;
+  border-radius: 0.5rem;
+  background-color: $main_light;
+  box-shadow: 0 0.25rem 0.75rem rgba($color: $shadow, $alpha: 0.09);
+}
+
+.account_table {
+  margin-top: 3.75rem;
+}
+
+.table_header {
+  @include row_container(1.375rem 0.75rem);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin: 0 1rem;
+
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: $text_gray;
+
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.rows_container {
+  margin-top: 1.5rem;
+  height: 60vh;
+  overflow-y: scroll;
+
+  padding: 0 1rem;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.table_row {
+  @include row_container(1.125rem 0.75rem);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  font-size: 1.125rem;
+  font-weight: 500;
+
+  border: 1px solid transparent;
+
+  &:not(:last-child) {
+    margin-bottom: 1rem;
+  }
+}
+
+.row_selected {
+  border: 1px solid $accent;
+}
+
+.table_column {
+  width: 16%;
+}
+
+.card_number {
+  width: 20%;
+}
+
+.tokens {
+  width: 18%;
+}
+
+.exists {
+  width: 8%;
+}
+
+.unselect_all {
+  width: fit-content;
+
+  margin: 2rem 1rem 0 auto;
+
+  font-size: 0.875rem;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
