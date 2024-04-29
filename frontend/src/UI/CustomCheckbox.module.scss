@@ -1,0 +1,37 @@
+@import "../variables.scss";
+
+.custom_checkbox {
+  cursor: pointer;
+  div {
+    position: relative;
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 1px solid $text_gray;
+    border-radius: 0.25rem;
+  }
+}
+
+.checkmark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  display: none;
+
+  width: 0.75rem;
+  height: 0.75rem;
+
+  color: $main_light;
+}
+
+input[type="checkbox"] {
+  display: none;
+
+  &:checked + div {
+    border: 1px solid $accent;
+    background-color: $accent;
+    .checkmark {
+      display: block;
+    }
+  }
+}
