@@ -20,6 +20,7 @@ const CustomCheckbox: FC<CustomCheckboxProps> = ({ name }) => {
   const dispatch = useDispatch();
 
   function handle_change() {
+    // Handle "check all" case
     if (name === "header") {
       if (checked_items.includes("header")) {
         dispatch(reset_checked_itmes());
@@ -34,12 +35,17 @@ const CustomCheckbox: FC<CustomCheckboxProps> = ({ name }) => {
       return;
     }
 
+    // Handle "check some" case
     if (checked_items.includes(name)) {
       dispatch(
-        set_checked_items(checked_items.filter((item) => item !== name))
+        set_checked_items(
+          checked_items.filter((item) => item !== name && item !== "header")
+        )
       );
     } else {
-      dispatch(set_checked_items([...checked_items, name]));
+      checked_items.length === accounts.length - 1
+        ? dispatch(set_checked_items([...checked_items, name, "header"]))
+        : dispatch(set_checked_items([...checked_items, name]));
     }
   }
 
