@@ -1,6 +1,7 @@
 port: 15100
 addr: localhost
 bank_username: bank_user
+frontend_path: /app/dist
 terminal_settings:
   terminal_key: 3C43FD0A-50E5-435F-8969-D83BC07C4912
   success_url: "http://mydomain.com/success_path"

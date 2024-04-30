@@ -53,7 +53,7 @@ impl Application {
 
         let app_state = AppState {
             bank,
-            settings: Arc::new(config),
+            settings: Arc::new(config.clone()),
             sessions: InteractionSessions::new(),
             ws_appender,
             http_client: reqwest::Client::new(),
@@ -71,7 +71,7 @@ impl Application {
             .nest("/system", system_router(app_state.clone()))
             .route("/healthcheck", routing::get(|| async { StatusCode::OK }))
             .with_state(app_state)
-            .fallback_service(ServeDir::new("/app/dist"))
+            .fallback_service(ServeDir::new(&config.frontend_path))
             .layer(cors);
 
         let server = axum::serve(listener, app.into_make_service());

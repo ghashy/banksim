@@ -21,6 +21,7 @@ pub struct Settings {
     pub addr: String,
     pub terminal_settings: TerminalSettings,
     pub bank_username: String,
+    pub frontend_path: String,
 }
 
 impl Settings {
