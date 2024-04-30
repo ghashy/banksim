@@ -6,6 +6,7 @@ use axum::Router;
 use http::{Method, StatusCode};
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::services::ServeDir;
 
 use crate::routes::html_pages_and_triggers::pages_and_triggers_router;
 use crate::routes::session::session_router;
@@ -70,6 +71,7 @@ impl Application {
             .nest("/system", system_router(app_state.clone()))
             .route("/healthcheck", routing::get(|| async { StatusCode::OK }))
             .with_state(app_state)
+            .fallback_service(ServeDir::new("/app/dist"))
             .layer(cors);
 
         let server = axum::serve(listener, app.into_make_service());

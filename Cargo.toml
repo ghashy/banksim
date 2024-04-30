@@ -22,7 +22,7 @@ cornucopia_async = { git = "https://github.com/cornucopia-rs/cornucopia", rev = 
 axum = { version = "0.7.5", features = ["macros", "tracing"] }
 tower = { version = "0.4.13", features = ["timeout"] }
 http = "1.1.0"
-tower-http = { version = "0.5.2", features = ["trace", "cors"] }
+tower-http = { version = "0.5.2", features = ["trace", "cors", "fs"] }
 tokio = { version = "1.37.0", features = [
   "macros",
   "rt-multi-thread",

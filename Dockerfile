@@ -21,6 +21,21 @@ RUN --mount=type=bind,source=src,target=src \
     cp ./target/release/$APP_NAME /app/$APP_NAME
 
 ################################################################################
+# Create a stage for building the frontend assets.
+
+FROM node:latest AS frontend
+
+WORKDIR /frontend
+
+# Copy the frontend source code
+COPY frontend .
+
+# Install dependencies and build the frontend assets
+RUN npm install -g pnpm && \
+    pnpm install && \
+    pnpm run build
+
+################################################################################
 # Create a stage for running the application.
 FROM debian:bookworm-slim AS final
 
@@ -39,8 +54,12 @@ RUN adduser \
 USER appuser
 
 WORKDIR /app
+
 # Copy the executable from the "build" stage.
 COPY --from=build /app/$APP_NAME /app/$APP_NAME
+
+# Copy the frontend assets from the "frontend" stage
+COPY --from=frontend /frontend/dist /app/dist
 
 # Expose the port that the application listens on.
 EXPOSE 15100
