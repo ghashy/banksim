@@ -1,6 +1,6 @@
 import styles from "./ActionButton.module.scss";
 import { FC, useEffect, useState } from "react";
-import { ActionButtonKind } from "../types";
+import { ActionKind } from "../types";
 import { AiOutlineDollarCircle } from "react-icons/ai";
 import { LuPlusCircle } from "react-icons/lu";
 import { IoTrash } from "react-icons/io5";
@@ -9,10 +9,11 @@ import { useSelector } from "react-redux";
 import { RootState } from "../state/store";
 
 interface ActionButtonProps {
-  kind: ActionButtonKind;
+  kind: ActionKind;
+  show_modal: (kind: ActionKind) => void;
 }
 
-const ActionButton: FC<ActionButtonProps> = ({ kind }) => {
+const ActionButton: FC<ActionButtonProps> = ({ kind, show_modal }) => {
   const checked_items = useSelector<RootState, string[]>(
     (state) => state.checked_items.items
   );
@@ -46,7 +47,10 @@ const ActionButton: FC<ActionButtonProps> = ({ kind }) => {
   }, [checked_items.length]);
 
   return (
-    <div className={styles.action_button}>
+    <div
+      className={styles.action_button}
+      onClick={() => show_modal(kind)}
+    >
       <p className={styles.button_name}>{button_name}</p>
       {kind === "new_account" && (
         <LuPlusCircle className={styles.button_icon} />
