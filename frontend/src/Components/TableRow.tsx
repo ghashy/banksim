@@ -4,14 +4,11 @@ import { IAccount } from "../types";
 import { FC, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../state/store";
+import { format_price } from "../helpers";
 
 interface TableRowProps {
   props: IAccount;
   idx: number;
-}
-
-function format_price(price: number): string {
-  return price.toLocaleString().replace(/,/g, "_");
 }
 
 const TableRow: FC<TableRowProps> = ({ props, idx }) => {
