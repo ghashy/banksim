@@ -5,7 +5,7 @@ import { FC } from "react";
 const TableHeader: FC = () => {
   return (
     <div className={styles.table_header}>
-      <CustomCheckbox name="header" />
+      <CustomCheckbox card_number="01" />
       <p className={`${styles.table_column} ${styles.card_number}`}>
         Card number
       </p>

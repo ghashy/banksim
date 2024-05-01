@@ -10,10 +10,10 @@ import {
 import { accounts } from "../mock_data";
 
 interface CustomCheckboxProps {
-  name: string;
+  card_number: string;
 }
 
-const CustomCheckbox: FC<CustomCheckboxProps> = ({ name }) => {
+const CustomCheckbox: FC<CustomCheckboxProps> = ({ card_number }) => {
   const checked_items = useSelector<RootState, string[]>(
     (state) => state.checked_items.items
   );
@@ -21,14 +21,12 @@ const CustomCheckbox: FC<CustomCheckboxProps> = ({ name }) => {
 
   function handle_change() {
     // Handle "check all" case
-    if (name === "header") {
-      if (checked_items.includes("header")) {
+    if (card_number === "01") {
+      if (checked_items.includes("01")) {
         dispatch(reset_checked_itmes());
       } else {
-        let all_checked: string[] = ["header"];
-        for (let i = 0; i < accounts.length; i++) {
-          all_checked.push(`row${i}`);
-        }
+        let all_checked: string[] = ["01"];
+        accounts.forEach((account) => all_checked.push(account.card_number));
         dispatch(set_checked_items(all_checked));
       }
 
@@ -36,28 +34,28 @@ const CustomCheckbox: FC<CustomCheckboxProps> = ({ name }) => {
     }
 
     // Handle "check some" case
-    if (checked_items.includes(name)) {
+    if (checked_items.includes(card_number)) {
       dispatch(
         set_checked_items(
-          checked_items.filter((item) => item !== name && item !== "header")
+          checked_items.filter((item) => item !== card_number && item !== "01")
         )
       );
     } else {
       checked_items.length === accounts.length - 1
-        ? dispatch(set_checked_items([...checked_items, name, "header"]))
-        : dispatch(set_checked_items([...checked_items, name]));
+        ? dispatch(set_checked_items([...checked_items, card_number, "01"]))
+        : dispatch(set_checked_items([...checked_items, card_number]));
     }
   }
 
   return (
     <label
-      htmlFor={name}
+      htmlFor={card_number}
       className={styles.custom_checkbox}
     >
       <input
         type="checkbox"
-        id={name}
-        checked={checked_items.includes(name)}
+        id={card_number}
+        checked={checked_items.includes(card_number)}
         onChange={handle_change}
       />
       <div>

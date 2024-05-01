@@ -12,7 +12,6 @@ const AccountTable: FC = () => {
         {accounts.map((account, idx) => (
           <TableRow
             props={account}
-            idx={idx}
             key={idx}
           />
         ))}

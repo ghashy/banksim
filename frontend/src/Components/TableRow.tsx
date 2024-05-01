@@ -8,10 +8,9 @@ import { format_price } from "../helpers";
 
 interface TableRowProps {
   props: IAccount;
-  idx: number;
 }
 
-const TableRow: FC<TableRowProps> = ({ props, idx }) => {
+const TableRow: FC<TableRowProps> = ({ props }) => {
   const checked_items = useSelector<RootState, string[]>(
     (state) => state.checked_items.items
   );
@@ -20,7 +19,7 @@ const TableRow: FC<TableRowProps> = ({ props, idx }) => {
   );
 
   useEffect(() => {
-    if (checked_items.includes(`row${idx}`)) {
+    if (checked_items.includes(props.card_number)) {
       set_row_class_names(`${styles.table_row} ${styles.row_selected}`);
     } else {
       set_row_class_names(`${styles.table_row}`);
@@ -29,7 +28,7 @@ const TableRow: FC<TableRowProps> = ({ props, idx }) => {
 
   return (
     <div className={row_class_names}>
-      <CustomCheckbox name={`row${idx}`} />
+      <CustomCheckbox card_number={props.card_number} />
       <p className={`${styles.table_column} ${styles.card_number}`}>
         {props.card_number}
       </p>
