@@ -3,9 +3,18 @@
 
 .navbar {
   @include page_padding;
+  padding-top: 0;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  width: 100%;
+
   color: $main_light;
   background-color: $accent;
   box-shadow: 0 0.25rem 0.25rem rgba($color: $shadow, $alpha: 0.12);
+
   overflow-y: hidden;
 }
 
