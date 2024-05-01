@@ -1,0 +1,167 @@
+@import "../variables.scss";
+
+@keyframes fade_in_bg {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade_in_content {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal_bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  height: 100%;
+
+  padding: 1rem;
+
+  background-color: rgba($color: $main_dark, $alpha: 0.1);
+  backdrop-filter: blur(0.375rem);
+  -webkit-backdrop-filter: blur(0.375em);
+
+  opacity: 0;
+  animation: fade_in_bg 0.2s ease-out forwards;
+  z-index: 99;
+}
+
+.content {
+  width: 100%;
+  max-width: 37rem;
+
+  padding: 1.875rem;
+
+  border-radius: 0.5rem;
+  background-color: $main_light;
+
+  opacity: 0;
+  animation: fade_in_content 0.2s ease-out forwards;
+}
+
+.close_icon {
+  display: block;
+
+  width: 1.25rem;
+  height: 1.25rem;
+
+  margin-left: auto;
+
+  cursor: pointer;
+}
+
+.h2 {
+  width: fit-content;
+  margin: 0 auto;
+  font-size: 1.875rem;
+  font-weight: 600;
+}
+
+// ───── Content props ────────────────────────────────────────────────────── //
+
+.submit_form {
+  max-width: 18.75rem;
+  margin: 3.5rem auto 0;
+}
+
+.label {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.text_input,
+.select {
+  width: 100%;
+
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+
+  font-family: "Figtree", sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
+
+  border: 1.5px solid $main_dark;
+  border-radius: 0.25rem;
+
+  &:focus {
+    outline: none;
+  }
+
+  &::placeholder {
+    color: $text_gray;
+  }
+}
+
+.submit_button {
+  width: 100%;
+
+  margin: 2.25rem 0 2rem;
+  padding: 0.75rem;
+
+  font-size: 1rem;
+  font-weight: 600;
+
+  border: none;
+  border-radius: 0.25rem;
+  background-color: $accent;
+  color: $main_light;
+
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(97%);
+    -webkit-filter: brightness(97%);
+  }
+}
+
+.submit_button[disabled] {
+  opacity: 0.5;
+  cursor: initial;
+}
+
+// ───── New Transaction props ────────────────────────────────────────────── //
+
+.select_container {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  color: $text_gray;
+  background-color: $main_light;
+  cursor: pointer;
+}
+
+.arrow_down {
+  position: absolute;
+  top: 50%;
+  transform: translateY(calc(-50% + 0.75rem));
+  right: 0.5rem;
+
+  width: 1.25rem;
+  height: 1.25rem;
+
+  color: $text_gray;
+  pointer-events: none;
+}
