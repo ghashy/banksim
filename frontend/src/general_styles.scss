@@ -1,7 +1,7 @@
 @import "./variables.scss";
 
 @mixin page_padding() {
-  padding: 0 clamp(0px, (100vw - 70rem) / 2, 9999px);
+  padding: 8.625rem clamp(0px, (100vw - 70rem) / 2, 9999px) 0;
 }
 
 @mixin link_underline() {
