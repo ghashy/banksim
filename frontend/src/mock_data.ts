@@ -11,7 +11,7 @@ export const accounts: IAccount[] = [
   },
   {
     balance: 100_000,
-    card_number: "8174505736614003",
+    card_number: "1092857320193847",
     exists: true,
     tokens: ["No tokens"],
     transactions: 43,
