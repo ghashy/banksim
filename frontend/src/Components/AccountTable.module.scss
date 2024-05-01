@@ -30,7 +30,7 @@
 
 .rows_container {
   margin-top: 1.5rem;
-  height: 60vh;
+  height: 50vh;
   overflow-y: scroll;
 
   padding: 0 1rem;
@@ -77,20 +77,4 @@
 
 .exists {
   width: 8%;
-}
-
-.unselect_all {
-  width: fit-content;
-
-  margin: 2rem 1rem 0 auto;
-
-  font-size: 0.875rem;
-  font-weight: 500;
-
-  visibility: hidden;
-  cursor: pointer;
-
-  &:hover {
-    text-decoration: underline;
-  }
 }
