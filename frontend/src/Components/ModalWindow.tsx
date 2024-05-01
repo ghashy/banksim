@@ -4,6 +4,7 @@ import { FC, useEffect, useRef } from "react";
 import { FaXmark } from "react-icons/fa6";
 import NewAccountModalContent from "./NewAccountModalContent";
 import NewTransactionModalContent from "./NewTransactionModalContent";
+import DeleteAccountModalContent from "./DeleteAccountModalContent";
 
 interface ModalWindowProps {
   kind: ActionKind;
@@ -52,10 +53,12 @@ const ModalWindow: FC<ModalWindowProps> = ({ kind, hide_window }) => {
           className={styles.close_icon}
           onClick={hide_window}
         />
-        {kind === "new_account" && <NewAccountModalContent />}
         {kind === "new_transaction" && <NewTransactionModalContent />}
-        {kind === "delete_account" && <div>delete account</div>}
+        {kind === "new_account" && <NewAccountModalContent />}
         {kind === "open_credit" && <div>open credit</div>}
+        {kind === "delete_account" && (
+          <DeleteAccountModalContent hide_window={hide_window} />
+        )}
       </div>
     </div>
   );
