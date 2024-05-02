@@ -23,7 +23,7 @@ const DeleteAccountModalContent: FC<DeleteAccountModalContentProps> = ({
   return (
     <>
       <h2 className={styles.h2}>Delete Account</h2>
-      <p className={styles.warning_message}>
+      <p className={styles.info_message}>
         Are you sure you want to delete{" "}
         {card_numbers.length === 1 ? "an account" : "accounts"}?
       </p>

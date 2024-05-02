@@ -13,7 +13,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   margin: 0 1rem;
+}
+
+.heading {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 1rem;
+  margin-right: 1.625rem;
 }
 
 .h2 {
@@ -21,7 +29,32 @@
   font-weight: 600;
 }
 
+.unselect_all {
+  margin-left: 1em;
+  font-size: 1.125rem;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .action_buttons {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .content {
+    padding-top: 2.5rem;
+  }
+
+  .h2 {
+    font-size: 1.5rem;
+  }
+
+  .unselect_all {
+    font-size: 0.875rem;
+  }
 }

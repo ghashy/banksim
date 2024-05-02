@@ -44,6 +44,14 @@ const ActionButton: FC<ActionButtonProps> = ({ kind, show_modal }) => {
         set_button_name("delete accounts");
       }
     }
+
+    if (kind === "open_credit") {
+      if (checked_items.length <= 1) {
+        set_button_name("open credit");
+      } else {
+        set_button_name("open credits");
+      }
+    }
   }, [checked_items.length]);
 
   return (

@@ -1,4 +1,5 @@
 @import "../variables.scss";
+@import "../general_styles.scss";
 
 @keyframes fade_in_bg {
   from {
@@ -109,6 +110,12 @@
   }
 }
 
+.info_message {
+  font-size: 1.125rem;
+  width: fit-content;
+  margin: 2.5rem auto 0;
+}
+
 .submit_button {
   width: 100%;
 
@@ -168,12 +175,6 @@
 
 // ───── Delete Account props ─────────────────────────────────────────────── //
 
-.warning_message {
-  font-size: 1.125rem;
-  width: fit-content;
-  margin: 2.5rem auto 0;
-}
-
 .action_buttons {
   display: flex;
   justify-content: space-between;
@@ -199,6 +200,10 @@
   color: $main_light;
   cursor: pointer;
 
+  &:not(:last-child) {
+    margin-right: 1.5rem;
+  }
+
   &:hover {
     filter: brightness(97%);
     -webkit-filter: brightness(97%);
@@ -211,4 +216,55 @@
 
 .cancel_button {
   background-color: #cecece;
+}
+
+@media (max-width: 640px) {
+  .content {
+    padding: 1rem;
+  }
+
+  .submit_form {
+    margin-top: 2rem;
+  }
+
+  .h2 {
+    font-size: 1.5rem;
+  }
+
+  .label,
+  .info_message {
+    font-size: 1rem;
+  }
+
+  .submit_button,
+  .action_buttons {
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-height: 540px) {
+  .content_new_transaction {
+    @include hide_scrollbar();
+
+    height: 100%;
+    overflow-y: scroll;
+  }
+}
+
+@media (max-height: 415px) {
+  .content_open_credit {
+    @include hide_scrollbar();
+
+    height: 100%;
+    overflow-y: scroll;
+  }
+}
+
+@media (max-height: 376px) and (min-width: 640px) {
+  .content_new_account {
+    @include hide_scrollbar();
+
+    height: 100%;
+    overflow-y: scroll;
+  }
 }
