@@ -2,6 +2,14 @@
 
 @mixin page_padding() {
   padding: 8.625rem clamp(0px, (100vw - 70rem) / 2, 9999px) 0;
+
+  @media (max-width: 880px) {
+    padding-top: 9.75rem;
+  }
+
+  @media (max-width: 640px) {
+    padding-top: 5.25rem;
+  }
 }
 
 @mixin link_underline() {
@@ -19,4 +27,18 @@
 
 a.active::after {
   @include link_underline();
+}
+
+@mixin hide_scrollbar() {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media (max-width: 640px) {
+  a.active {
+    color: $accent;
+  }
 }
