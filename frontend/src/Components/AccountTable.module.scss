@@ -23,7 +23,6 @@
   @include hide_scrollbar();
 
   margin-top: 2.75rem;
-  // padding: 0 1rem;
   overflow-x: scroll;
 }
 
@@ -35,6 +34,7 @@
   margin: 0 1rem;
 
   font-weight: 700;
+  letter-spacing: 0.02em;
   color: $text_gray;
 
   user-select: none;
