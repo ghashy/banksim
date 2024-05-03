@@ -23,7 +23,7 @@
   @include hide_scrollbar();
 
   margin-top: 2.75rem;
-  padding: 0 1rem;
+  // padding: 0 1rem;
   overflow-x: scroll;
 }
 
@@ -31,6 +31,8 @@
   @include row_container(1.22em 0.7em);
 
   min-width: 53rem;
+
+  margin: 0 1rem;
 
   font-weight: 700;
   color: $text_gray;
@@ -46,6 +48,7 @@
   height: 50vh;
 
   margin-top: 1.5rem;
+  padding: 0 1rem;
 
   overflow-y: scroll;
 }
@@ -66,16 +69,29 @@
   border: 1px solid $accent;
 }
 
-.table_column {
-  width: 16%;
+.row_disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .card_number {
   width: 22%;
 }
 
+.transactions {
+  width: 14%;
+}
+
+.balance {
+  width: 12%;
+}
+
+.username {
+  width: 22%;
+}
+
 .tokens {
-  width: 18%;
+  width: 14%;
 }
 
 .exists {
@@ -86,6 +102,14 @@
   .account_table {
     width: calc(100vw - 2rem);
     margin-inline: auto;
+    padding: 0;
+  }
+
+  .table_header {
+    margin: 0;
+  }
+
+  .rows_container {
     padding: 0;
   }
 }

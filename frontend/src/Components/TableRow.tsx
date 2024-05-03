@@ -11,29 +11,35 @@ interface TableRowProps {
 }
 
 const TableRow: FC<TableRowProps> = ({ props }) => {
+  const [row_class_names, set_row_class_names] = useState(
+    `${styles.table_row} ${!props.exists && styles.row_disabled}`
+  );
+
   const checked_items = useSelector<RootState, string[]>(
     (state) => state.checked_items.items
-  );
-  const [row_class_names, set_row_class_names] = useState(
-    `${styles.table_row}`
   );
 
   useEffect(() => {
     if (checked_items.includes(props.card_number)) {
-      set_row_class_names(`${styles.table_row} ${styles.row_selected}`);
+      set_row_class_names(`${row_class_names} ${styles.row_selected}`);
     } else {
-      set_row_class_names(`${styles.table_row}`);
+      set_row_class_names(
+        `${styles.table_row} ${!props.exists && styles.row_disabled}`
+      );
     }
   }, [checked_items]);
 
   return (
     <div className={row_class_names}>
-      <CustomCheckbox card_number={props.card_number} />
+      <CustomCheckbox
+        card_number={props.card_number}
+        disabled={!props.exists}
+      />
       <p className={`${styles.table_column} ${styles.card_number}`}>
         {props.card_number}
       </p>
       <p className={`${styles.table_column} ${styles.transactions}`}>
-        {props.transactions}
+        {props.transactions.length}
       </p>
       <p className={`${styles.table_column} ${styles.balance}`}>
         {format_price(props.balance)}
@@ -42,7 +48,7 @@ const TableRow: FC<TableRowProps> = ({ props }) => {
         {props.username}
       </p>
       <p className={`${styles.table_column} ${styles.tokens}`}>
-        {props.tokens[0]}
+        {props.tokens.length === 0 ? "No tokens" : "Some tokens"}
       </p>
       <p className={`${styles.table_column} ${styles.exists}`}>
         {props.exists ? "True" : "False"}
