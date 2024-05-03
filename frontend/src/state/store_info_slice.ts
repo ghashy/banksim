@@ -2,9 +2,9 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { IStoreInfo } from "../types";
 
 const initial_state: IStoreInfo = {
-  card: "",
-  balance: "",
-  emission: "",
+  card: "--",
+  balance: "--",
+  emission: "--",
 };
 
 const store_info_slice = createSlice({
