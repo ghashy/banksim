@@ -1,8 +1,10 @@
 import styles from "./ModalWindow.module.scss";
-import { accounts } from "../mock_data";
 import { FC, FormEvent, useEffect, useState } from "react";
 import { IoChevronDownOutline } from "react-icons/io5";
 import { format_price } from "../helpers";
+import { useSelector } from "react-redux";
+import { RootState } from "../state/store";
+import { IAccount } from "../types";
 
 const NewTransactionModalContent: FC = () => {
   const [form_data, set_form_data] = useState({
@@ -11,6 +13,9 @@ const NewTransactionModalContent: FC = () => {
     amount: "",
   });
   const [button_disabled, set_button_disabled] = useState(true);
+  const account_list = useSelector<RootState, IAccount[]>(
+    (state) => state.account_list.account_list
+  );
 
   function handle_change(
     e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
@@ -76,7 +81,7 @@ const NewTransactionModalContent: FC = () => {
             >
               card number
             </option>
-            {accounts.map((account, idx) => (
+            {account_list.map((account, idx) => (
               <option
                 value={account.card_number}
                 key={idx}
@@ -110,7 +115,7 @@ const NewTransactionModalContent: FC = () => {
             >
               card number
             </option>
-            {accounts.map((account, idx) => (
+            {account_list.map((account, idx) => (
               <option
                 value={account.card_number}
                 key={idx}
