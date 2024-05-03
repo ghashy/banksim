@@ -7,16 +7,21 @@ import {
   reset_checked_itmes,
   set_checked_items,
 } from "../state/checked_items_slice";
-import { accounts } from "../mock_data";
+import { IAccount } from "../types";
 
 interface CustomCheckboxProps {
   card_number: string;
+  disabled: boolean;
 }
 
-const CustomCheckbox: FC<CustomCheckboxProps> = ({ card_number }) => {
+const CustomCheckbox: FC<CustomCheckboxProps> = ({ card_number, disabled }) => {
   const checked_items = useSelector<RootState, string[]>(
     (state) => state.checked_items.items
   );
+  const account_list = useSelector<RootState, IAccount[]>(
+    (state) => state.account_list.account_list
+  );
+
   const dispatch = useDispatch();
 
   function handle_change() {
@@ -26,7 +31,9 @@ const CustomCheckbox: FC<CustomCheckboxProps> = ({ card_number }) => {
         dispatch(reset_checked_itmes());
       } else {
         let all_checked: string[] = ["01"];
-        accounts.forEach((account) => all_checked.push(account.card_number));
+        account_list
+          .filter((account) => account.exists)
+          .forEach((account) => all_checked.push(account.card_number));
         dispatch(set_checked_items(all_checked));
       }
 
@@ -41,7 +48,7 @@ const CustomCheckbox: FC<CustomCheckboxProps> = ({ card_number }) => {
         )
       );
     } else {
-      checked_items.length === accounts.length - 1
+      checked_items.length === account_list.length - 1
         ? dispatch(set_checked_items([...checked_items, card_number, "01"]))
         : dispatch(set_checked_items([...checked_items, card_number]));
     }
@@ -57,6 +64,7 @@ const CustomCheckbox: FC<CustomCheckboxProps> = ({ card_number }) => {
         id={card_number}
         checked={checked_items.includes(card_number)}
         onChange={handle_change}
+        disabled={disabled}
       />
       <div>
         <FaCheck className={styles.checkmark} />
