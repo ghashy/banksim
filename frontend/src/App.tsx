@@ -7,7 +7,7 @@ import LogsPage from "./Pages/LogsPage";
 import AboutPage from "./Pages/AboutPage";
 import NotFoundPage from "./Pages/NotFoundPage";
 import { useEffect } from "react";
-import { API_URL, AUTH_HEADER } from "./config";
+import { API_URL, AUTH_HEADER, IS_SECURE } from "./config";
 import useAxios from "./hooks/useAxios";
 import { useDispatch } from "react-redux";
 import {
@@ -41,7 +41,7 @@ function App() {
   async function get_account_lsit() {
     const response = await fetch_list({
       method: "GET",
-      url: `${API_URL}/system/list_accounts`,
+      url: `http${IS_SECURE ? "s" : ""}${API_URL}/system/list_accounts`,
       headers: {
         Authorization: AUTH_HEADER,
       },
@@ -56,7 +56,7 @@ function App() {
   async function get_store_card() {
     const response = await fetch_card({
       method: "GET",
-      url: `${API_URL}/system/store_card`,
+      url: `http${IS_SECURE ? "s" : ""}${API_URL}/system/store_card`,
       headers: {
         Authorization: AUTH_HEADER,
       },
@@ -71,7 +71,7 @@ function App() {
   async function get_store_balance() {
     const response = await fetch_balance({
       method: "GET",
-      url: `${API_URL}/system/store_balance`,
+      url: `http${IS_SECURE ? "s" : ""}${API_URL}/system/store_balance`,
       headers: {
         Authorization: AUTH_HEADER,
       },
@@ -86,7 +86,7 @@ function App() {
   async function get_store_emission() {
     const response = await fetch_emission({
       method: "GET",
-      url: `${API_URL}/system/emission`,
+      url: `http${IS_SECURE ? "s" : ""}${API_URL}/system/emission`,
       headers: {
         Authorization: AUTH_HEADER,
       },
@@ -103,7 +103,7 @@ function App() {
 
     if (token) {
       const socket = new WebSocket(
-        `ws://localhost:15100/system/${endpoint}/${token}`
+        `ws${API_URL}${IS_SECURE ? "s" : ""}/system/${endpoint}/${token}`
       );
       socket.onopen = () => {
         switch (endpoint) {
@@ -158,7 +158,7 @@ function App() {
   async function get_token() {
     const response = await fetch_token({
       method: "GET",
-      url: `${API_URL}/system/ws_token`,
+      url: `http${IS_SECURE ? "s" : ""}${API_URL}/system/ws_token`,
       headers: {
         Authorization: AUTH_HEADER,
       },

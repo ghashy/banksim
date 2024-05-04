@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { FC, useState } from "react";
 import { RootState } from "../state/store";
 import useAxios from "../hooks/useAxios";
-import { API_URL, AUTH_HEADER } from "../config";
+import { API_URL, AUTH_HEADER, IS_SECURE } from "../config";
 import { handle_retry } from "../helpers";
 import ErrorModalContent from "./ErrorModalContent";
 import { reset_checked_itmes } from "../state/checked_items_slice";
@@ -40,7 +40,7 @@ const DeleteAccountModalContent: FC<DeleteAccountModalContentProps> = ({
 
       const response = await delete_account({
         method: "DELETE",
-        url: `${API_URL}/system/account`,
+        url: `http${IS_SECURE ? "s" : ""}${API_URL}/system/account`,
         headers: {
           Authorization: AUTH_HEADER,
           "Content-Type": "application/json",

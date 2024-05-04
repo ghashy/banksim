@@ -13,6 +13,9 @@ export default defineConfig(({ mode }) => {
       "process.env.VITE_REACT_APP_API_URL": JSON.stringify(
         env.VITE_REACT_APP_API_URL
       ),
+      "process.env.VITE_REACT_APP_IS_SECURE": JSON.stringify(
+        env.VITE_REACT_APP_IS_SECURE
+      ),
     },
     plugins: [react()],
   };

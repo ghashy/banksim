@@ -1,6 +1,6 @@
 import styles from "./ModalWindow.module.scss";
 import { generateUsername } from "unique-username-generator";
-import { API_URL, AUTH_HEADER } from "../config";
+import { API_URL, AUTH_HEADER, IS_SECURE } from "../config";
 import useAxios from "../hooks/useAxios";
 import { FC, FormEvent, useEffect, useState } from "react";
 import ErrorModalContent from "./ErrorModalContent";
@@ -49,7 +49,7 @@ const NewAccountModalContent: FC<NewAccountModalContentProps> = ({
 
     const response = await add_account({
       method: "POST",
-      url: `${API_URL}/system/account`,
+      url: `http${IS_SECURE ? "s" : ""}${API_URL}/system/account`,
       headers: {
         Authorization: AUTH_HEADER,
         "Content-Type": "application/json",

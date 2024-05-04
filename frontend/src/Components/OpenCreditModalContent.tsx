@@ -4,7 +4,7 @@ import { RootState } from "../state/store";
 import { FC, FormEvent, useEffect, useState } from "react";
 import { format_price, handle_retry } from "../helpers";
 import useAxios from "../hooks/useAxios";
-import { API_URL, AUTH_HEADER } from "../config";
+import { API_URL, AUTH_HEADER, IS_SECURE } from "../config";
 import ErrorModalContent from "./ErrorModalContent";
 import { reset_checked_itmes } from "../state/checked_items_slice";
 
@@ -62,7 +62,7 @@ const OpenCreditModalContent: FC<OpenCreditModalContentProps> = ({
 
       const response = await open_credit({
         method: "POST",
-        url: `${API_URL}/system/credit`,
+        url: `http${IS_SECURE ? "s" : ""}${API_URL}/system/credit`,
         headers: {
           Authorization: AUTH_HEADER,
           "Content-Type": "application/json",
