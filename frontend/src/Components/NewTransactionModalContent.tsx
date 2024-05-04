@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../state/store";
 import { IAccount } from "../types";
 import useAxios from "../hooks/useAxios";
-import { API_URL } from "../config";
+import { API_URL, AUTH_HEADER } from "../config";
 import ErrorModalContent from "./ErrorModalContent";
 
 interface NewTransactionModalContentProps {
@@ -77,6 +77,7 @@ const NewTransactionModalContent: FC<NewTransactionModalContentProps> = ({
       method: "POST",
       url: `${API_URL}/system/transaction`,
       headers: {
+        Authorization: AUTH_HEADER,
         "Content-Type": "application/json",
       },
       data: data,

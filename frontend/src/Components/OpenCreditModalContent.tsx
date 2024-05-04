@@ -1,11 +1,12 @@
-import { useSelector } from "react-redux";
-import { RootState } from "../state/store";
 import styles from "./ModalWindow.module.scss";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../state/store";
 import { FC, FormEvent, useEffect, useState } from "react";
 import { format_price, handle_retry } from "../helpers";
 import useAxios from "../hooks/useAxios";
-import { API_URL } from "../config";
+import { API_URL, AUTH_HEADER } from "../config";
 import ErrorModalContent from "./ErrorModalContent";
+import { reset_checked_itmes } from "../state/checked_items_slice";
 
 interface OpenCreditModalContentProps {
   hide_window: () => void;
@@ -33,6 +34,7 @@ const OpenCreditModalContent: FC<OpenCreditModalContentProps> = ({
     response_status: error_response_status,
     set_response_status: set_error_response_status,
   } = useAxios();
+  const dispatch = useDispatch();
 
   function handle_change(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
@@ -62,6 +64,7 @@ const OpenCreditModalContent: FC<OpenCreditModalContentProps> = ({
         method: "POST",
         url: `${API_URL}/system/credit`,
         headers: {
+          Authorization: AUTH_HEADER,
           "Content-Type": "application/json",
         },
         data: data,
@@ -75,6 +78,7 @@ const OpenCreditModalContent: FC<OpenCreditModalContentProps> = ({
     Promise.all(requests)
       .then((response: any[]) => {
         if (response.every((answer) => answer)) {
+          dispatch(reset_checked_itmes());
           hide_window();
         }
       })

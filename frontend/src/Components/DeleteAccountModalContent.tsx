@@ -1,11 +1,12 @@
 import styles from "./ModalWindow.module.scss";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { FC, useState } from "react";
 import { RootState } from "../state/store";
 import useAxios from "../hooks/useAxios";
-import { API_URL } from "../config";
+import { API_URL, AUTH_HEADER } from "../config";
 import { handle_retry } from "../helpers";
 import ErrorModalContent from "./ErrorModalContent";
+import { reset_checked_itmes } from "../state/checked_items_slice";
 
 interface DeleteAccountModalContentProps {
   hide_window: () => void;
@@ -25,6 +26,7 @@ const DeleteAccountModalContent: FC<DeleteAccountModalContentProps> = ({
     response_status: error_response_status,
     set_response_status: set_error_response_status,
   } = useAxios();
+  const dispatch = useDispatch();
 
   function handle_delete() {
     if (fetching) {
@@ -40,6 +42,7 @@ const DeleteAccountModalContent: FC<DeleteAccountModalContentProps> = ({
         method: "DELETE",
         url: `${API_URL}/system/account`,
         headers: {
+          Authorization: AUTH_HEADER,
           "Content-Type": "application/json",
         },
         data: data,
@@ -53,6 +56,7 @@ const DeleteAccountModalContent: FC<DeleteAccountModalContentProps> = ({
     Promise.all(requests)
       .then((response: any[]) => {
         if (response.every((answer) => answer)) {
+          dispatch(reset_checked_itmes());
           hide_window();
         }
       })
