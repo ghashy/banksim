@@ -7,7 +7,7 @@ import LogsPage from "./Pages/LogsPage";
 import AboutPage from "./Pages/AboutPage";
 import NotFoundPage from "./Pages/NotFoundPage";
 import { useEffect } from "react";
-import { API_URL } from "./config";
+import { API_URL, AUTH_HEADER } from "./config";
 import useAxios from "./hooks/useAxios";
 import { useDispatch } from "react-redux";
 import {
@@ -26,18 +26,25 @@ import {
   set_store_emission_error,
   set_store_emmision_loading,
 } from "./state/store_info_slice";
+import { set_logs } from "./state/logs_slice";
+import { set_account_socket_open } from "./state/account_socket_slice";
+import { SocketEndpoints } from "./types";
 
 function App() {
   const { fetch_data: fetch_list, error_data: list_error } = useAxios();
   const { fetch_data: fetch_card, error_data: card_error } = useAxios();
   const { fetch_data: fetch_emission, error_data: emission_error } = useAxios();
   const { fetch_data: fetch_balance, error_data: balance_error } = useAxios();
+  const { fetch_data: fetch_token } = useAxios();
   const dispatch = useDispatch();
 
   async function get_account_lsit() {
     const response = await fetch_list({
       method: "GET",
       url: `${API_URL}/system/list_accounts`,
+      headers: {
+        Authorization: AUTH_HEADER,
+      },
     });
 
     if (response?.status === 200) {
@@ -50,6 +57,9 @@ function App() {
     const response = await fetch_card({
       method: "GET",
       url: `${API_URL}/system/store_card`,
+      headers: {
+        Authorization: AUTH_HEADER,
+      },
     });
 
     if (response?.status === 200) {
@@ -62,6 +72,9 @@ function App() {
     const response = await fetch_balance({
       method: "GET",
       url: `${API_URL}/system/store_balance`,
+      headers: {
+        Authorization: AUTH_HEADER,
+      },
     });
 
     if (response?.status === 200) {
@@ -74,6 +87,9 @@ function App() {
     const response = await fetch_emission({
       method: "GET",
       url: `${API_URL}/system/emission`,
+      headers: {
+        Authorization: AUTH_HEADER,
+      },
     });
 
     if (response?.status === 200) {
@@ -81,6 +97,95 @@ function App() {
       dispatch(set_store_emmision_loading(false));
     }
   }
+
+  async function connect_to_socket(endpoint: SocketEndpoints) {
+    const token = await get_token();
+
+    if (token) {
+      const socket = new WebSocket(
+        `ws://localhost:15100/system/${endpoint}/${token}`
+      );
+      socket.onopen = () => {
+        switch (endpoint) {
+          case "subscribe_on_accounts":
+            dispatch(set_account_socket_open(true));
+            console.log("Account WebSocket connection opened");
+            break;
+          case "subscribe_on_traces":
+            console.log("Logs WebSocket connection opened");
+            break;
+        }
+      };
+      socket.onmessage = (e: MessageEvent) => {
+        switch (endpoint) {
+          case "subscribe_on_accounts":
+            get_account_lsit();
+            get_store_balance();
+            get_store_emission();
+            break;
+          case "subscribe_on_traces":
+            dispatch(set_logs(e.data));
+            break;
+        }
+      };
+      socket.onerror = (e: Event) => {
+        console.log(e);
+      };
+      socket.onclose = () => {
+        switch (endpoint) {
+          case "subscribe_on_accounts":
+            dispatch(set_account_socket_open(false));
+            dispatch(set_acccount_list([]));
+            console.log("Account WebSocket connection closed");
+            break;
+          case "subscribe_on_traces":
+            console.log("Logs WebSocket connection closed");
+            break;
+        }
+      };
+    } else {
+      switch (endpoint) {
+        case "subscribe_on_accounts":
+          console.error("Accounts token fetch failed, try again");
+          break;
+        case "subscribe_on_traces":
+          console.error("Logs token fetch failed, try again");
+          break;
+      }
+    }
+  }
+
+  async function get_token() {
+    const response = await fetch_token({
+      method: "GET",
+      url: `${API_URL}/system/ws_token`,
+      headers: {
+        Authorization: AUTH_HEADER,
+      },
+    });
+    return response?.data;
+  }
+
+  // Get data
+  useEffect(() => {
+    // Connect to sockets
+    connect_to_socket("subscribe_on_accounts");
+    connect_to_socket("subscribe_on_traces");
+
+    //Get account list
+    get_account_lsit();
+
+    // Get store info
+    try {
+      Promise.all([
+        get_store_balance(),
+        get_store_card(),
+        get_store_emission(),
+      ]);
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
 
   // Set errors
   useEffect(() => {
@@ -102,50 +207,6 @@ function App() {
     }
   }, [list_error, card_error, emission_error, balance_error]);
 
-  // Get data
-  useEffect(() => {
-    // Get account list
-    get_account_lsit();
-
-    // Get store info
-    try {
-      Promise.all([
-        get_store_balance(),
-        get_store_card(),
-        get_store_emission(),
-      ]);
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  //WebSocket connections
-  useEffect(() => {
-    const socket = new WebSocket(
-      `ws://localhost:15100/system/subscribe_on_traces`
-    );
-
-    socket.onerror = (e: Event) => {
-      console.log(e);
-    };
-
-    socket.onopen = () => {
-      console.log("WebSocket connection opened");
-    };
-
-    socket.onmessage = (e: MessageEvent) => {
-      console.log(e.data);
-    };
-
-    socket.onclose = () => {
-      console.log("WebSocket connection closed");
-    };
-
-    return () => {
-      socket.close();
-    };
-  }, []);
-
   return (
     <BrowserRouter>
       <Routes>
@@ -155,7 +216,12 @@ function App() {
         >
           <Route
             index
-            element={<MainPage />}
+            element={
+              <MainPage
+                get_account_list={get_account_lsit}
+                connect_to_socket={connect_to_socket}
+              />
+            }
           />
           <Route
             path="transactions"
