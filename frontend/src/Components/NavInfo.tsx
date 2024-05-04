@@ -14,7 +14,11 @@ const NavInfo: FC = () => {
       <p className={styles.info_unit}>
         Store card:{" "}
         {!store_info.card.is_loading ? (
-          <span>{store_info.card.content}</span>
+          store_info.card.error ? (
+            <span>Fetch error</span>
+          ) : (
+            <span>{store_info.card.content}</span>
+          )
         ) : (
           <>
             <span className={styles.dash1}>-</span>
@@ -25,7 +29,11 @@ const NavInfo: FC = () => {
       <p className={styles.info_unit}>
         Store balance:{" "}
         {!store_info.balance.is_loading ? (
-          <span>{store_info.balance.content}</span>
+          store_info.balance.error ? (
+            <span>Fetch error</span>
+          ) : (
+            <span>{store_info.balance.content}</span>
+          )
         ) : (
           <>
             <span className={styles.dash1}>-</span>
@@ -36,7 +44,11 @@ const NavInfo: FC = () => {
       <p className={styles.info_unit}>
         Bank emission:{" "}
         {!store_info.emission.is_loading ? (
-          <span>{store_info.emission.content}</span>
+          store_info.emission.error ? (
+            <span>Fetch error</span>
+          ) : (
+            <span>{store_info.emission.content}</span>
+          )
         ) : (
           <>
             <span className={styles.dash1}>-</span>

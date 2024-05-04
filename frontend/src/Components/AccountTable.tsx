@@ -14,6 +14,9 @@ const AccountTable: FC = () => {
   const accounts_loading = useSelector<RootState, boolean>(
     (state) => state.account_list.is_loading
   );
+  const accounts_error = useSelector<RootState, string>(
+    (state) => state.account_list.error
+  );
   const [sorted_list, set_sorted_list] = useState<IAccount[]>([]);
 
   useEffect(() => {
@@ -35,6 +38,8 @@ const AccountTable: FC = () => {
       <TableHeader />
       {accounts_loading ? (
         <TableSkeleton />
+      ) : accounts_error ? (
+        <div className={styles.error_message}>{accounts_error}</div>
       ) : (
         <div className={styles.rows_container}>
           {sorted_list.map((account, idx) => (
