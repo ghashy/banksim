@@ -14,10 +14,13 @@
   </head>
   <body>
     <div id="root"></div>
-    <script src="/env.js"></script>
     <script
       type="module"
       src="/src/main.tsx"
     ></script>
+    <script>
+      window.domain_name = "{{ domain_name }}";
+      window.secure = "{{ secure }}";
+    </script>
   </body>
 </html>

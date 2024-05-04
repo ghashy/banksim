@@ -1,6 +1,8 @@
-import { env } from "./env";
-export const API_URL = env.VITE_REACT_APP_API_URL || "://localhost:15100";
-export const IS_SECURE = env.VITE_REACT_APP_IS_SECURE || "";
+// export const API_URL = "://localhost:15100";
+// export const IS_SECURE = "";
+
+export const API_URL: string = (window as any).domain_name;
+export const IS_SECURE: boolean = !!(window as any).secure;
 
 export const MAX_RETRIES = 7;
 export const RETRY_DELAY_MS = 1000;
