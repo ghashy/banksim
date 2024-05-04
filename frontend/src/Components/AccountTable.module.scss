@@ -113,6 +113,23 @@
   font-size: 1.125rem;
 }
 
+.socket_err {
+  margin: 2.75rem 1rem 0;
+  p {
+    font-size: 1.125rem;
+  }
+}
+
+.reconnect_button {
+  @include submit_button;
+  width: fit-content;
+  min-width: 6.375rem;
+}
+
+.loader_small {
+  @include loader_small;
+}
+
 // ───── Table Skeleton ───────────────────────────────────────────────────── //
 
 .skeleton_container {

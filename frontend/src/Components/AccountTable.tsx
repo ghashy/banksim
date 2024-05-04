@@ -4,10 +4,18 @@ import TableHeader from "./TableHeader";
 import TableRow from "./TableRow";
 import { useSelector } from "react-redux";
 import { RootState } from "../state/store";
-import { IAccount } from "../types";
+import { IAccount, SocketEndpoints } from "../types";
 import TableSkeleton from "./TableSkeleton";
 
-const AccountTable: FC = () => {
+interface AccountTableProps {
+  get_account_list: () => Promise<void>;
+  connect_to_socket: (endpoit: SocketEndpoints) => Promise<void>;
+}
+
+const AccountTable: FC<AccountTableProps> = ({
+  get_account_list,
+  connect_to_socket,
+}) => {
   const account_list = useSelector<RootState, IAccount[]>(
     (state) => state.account_list.account_list
   );
@@ -17,7 +25,30 @@ const AccountTable: FC = () => {
   const accounts_error = useSelector<RootState, string>(
     (state) => state.account_list.error
   );
+  const account_socket_open = useSelector<RootState, boolean>(
+    (state) => state.account_socket_open.is_open
+  );
   const [sorted_list, set_sorted_list] = useState<IAccount[]>([]);
+  const [fetching, set_fetching] = useState(false);
+
+  async function handle_reconnect_click() {
+    if (fetching) {
+      return;
+    }
+
+    set_fetching(true);
+
+    await connect_to_socket("subscribe_on_accounts");
+
+    //FIXME shitty fetching logic
+    set_fetching(false);
+  }
+
+  useEffect(() => {
+    if (account_socket_open) {
+      get_account_list();
+    }
+  }, [account_socket_open]);
 
   useEffect(() => {
     set_sorted_list(
@@ -36,7 +67,21 @@ const AccountTable: FC = () => {
   return (
     <div className={styles.account_table}>
       <TableHeader />
-      {accounts_loading ? (
+      {!account_socket_open ? (
+        <div className={styles.socket_err}>
+          <p>Websocket connection is lost, try again</p>
+          <div
+            onClick={handle_reconnect_click}
+            className={styles.reconnect_button}
+          >
+            {fetching ? (
+              <span className={styles.loader_small}></span>
+            ) : (
+              "Reconnect"
+            )}
+          </div>
+        </div>
+      ) : accounts_loading ? (
         <TableSkeleton />
       ) : accounts_error ? (
         <div className={styles.error_message}>{accounts_error}</div>
