@@ -2,9 +2,10 @@ import { useSelector } from "react-redux";
 import { RootState } from "../state/store";
 import styles from "./ModalWindow.module.scss";
 import { FC, FormEvent, useEffect, useState } from "react";
-import { format_price } from "../helpers";
+import { format_price, handle_retry } from "../helpers";
 import useAxios from "../hooks/useAxios";
-import { API_URL, AUTH_HEADER } from "../config";
+import { API_URL } from "../config";
+import ErrorModalContent from "./ErrorModalContent";
 
 interface OpenCreditModalContentProps {
   hide_window: () => void;
@@ -21,10 +22,17 @@ const OpenCreditModalContent: FC<OpenCreditModalContentProps> = ({
     amount: null,
   });
   const [button_disabled, set_button_disabled] = useState(true);
+  const [fetching, set_fetching] = useState(false);
   const card_numbers = useSelector<RootState, string[]>(
     (state) => state.checked_items.items
   ).filter((card_number) => card_number !== "01");
-  const { fetch_data: open_credit } = useAxios();
+  const {
+    fetch_data: open_credit,
+    error_data: error_data,
+    set_error_data: set_error_data,
+    response_status: error_response_status,
+    set_response_status: set_error_response_status,
+  } = useAxios();
 
   function handle_change(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
@@ -35,29 +43,48 @@ const OpenCreditModalContent: FC<OpenCreditModalContentProps> = ({
     });
   }
 
-  function handle_submit(e: FormEvent<HTMLFormElement>) {
+  async function handle_submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    card_numbers.forEach(async (card_number) => {
+    if (fetching) {
+      return;
+    }
+
+    set_fetching(true);
+
+    async function credit(card_number: string) {
       const data = JSON.stringify({
         card_number: card_number,
         amount: form_data.amount,
       });
 
-      await open_credit({
+      const response = await open_credit({
         method: "POST",
         url: `${API_URL}/system/credit`,
         headers: {
-          Authorization: AUTH_HEADER,
           "Content-Type": "application/json",
         },
         data: data,
       });
 
-      //TODO Add error handling
-    });
+      return response;
+    }
 
-    hide_window();
+    const requests = card_numbers.map((card_number) => credit(card_number));
+
+    Promise.all(requests)
+      .then((response: any[]) => {
+        if (response.every((answer) => answer)) {
+          hide_window();
+        }
+      })
+      .catch((err) => console.error(err));
+  }
+
+  function set_states() {
+    set_fetching(false);
+    set_error_data("");
+    set_error_response_status(0);
   }
 
   useEffect(() => {
@@ -67,6 +94,16 @@ const OpenCreditModalContent: FC<OpenCreditModalContentProps> = ({
       set_button_disabled(true);
     }
   }, [form_data]);
+
+  if (error_data) {
+    return (
+      <ErrorModalContent
+        error_response_status={error_response_status}
+        error_data={error_data}
+        handle_retry={() => handle_retry(error_response_status, set_states)}
+      />
+    );
+  }
 
   return (
     <>
@@ -98,7 +135,7 @@ const OpenCreditModalContent: FC<OpenCreditModalContentProps> = ({
           className={styles.submit_button}
           disabled={button_disabled}
         >
-          Submit
+          {fetching ? <span className={styles.loader_small}></span> : "Submit"}
         </button>
       </form>
     </>

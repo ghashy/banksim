@@ -143,6 +143,14 @@
   cursor: initial;
 }
 
+.loader_small {
+  @include loader_small;
+}
+
+.loader_delete {
+  border-top: 0.125rem solid $warning;
+}
+
 // ───── New Transaction props ────────────────────────────────────────────── //
 
 .select_container {
@@ -216,6 +224,11 @@
 
 .cancel_button {
   background-color: #cecece;
+}
+
+.retry_button {
+  margin: 3rem auto 1rem;
+  background-color: $accent;
 }
 
 @media (max-width: 640px) {

@@ -1,12 +1,13 @@
 import styles from "./ModalWindow.module.scss";
 import { FC, FormEvent, useEffect, useState } from "react";
 import { IoChevronDownOutline } from "react-icons/io5";
-import { format_price } from "../helpers";
+import { format_price, handle_retry } from "../helpers";
 import { useSelector } from "react-redux";
 import { RootState } from "../state/store";
 import { IAccount } from "../types";
 import useAxios from "../hooks/useAxios";
-import { API_URL, AUTH_HEADER } from "../config";
+import { API_URL } from "../config";
+import ErrorModalContent from "./ErrorModalContent";
 
 interface NewTransactionModalContentProps {
   hide_window: () => void;
@@ -27,13 +28,20 @@ const NewTransactionModalContent: FC<NewTransactionModalContentProps> = ({
     amount: null,
   });
   const [button_disabled, set_button_disabled] = useState(true);
+  const [fetching, set_fetching] = useState(false);
   const account_list = useSelector<RootState, IAccount[]>(
     (state) => state.account_list.account_list
   );
   const store_card = useSelector<RootState, string>(
     (state) => state.store_info.card.content
   );
-  const { fetch_data: new_transaction } = useAxios();
+  const {
+    fetch_data: new_transaction,
+    error_data: error_data,
+    set_error_data: set_error_data,
+    response_status: error_response_status,
+    set_response_status: set_error_response_status,
+  } = useAxios();
 
   function handle_change(
     e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
@@ -57,6 +65,11 @@ const NewTransactionModalContent: FC<NewTransactionModalContentProps> = ({
 
   async function handle_submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (fetching) {
+      return;
+    }
+
+    set_fetching(true);
 
     const data = JSON.stringify(form_data);
 
@@ -64,7 +77,6 @@ const NewTransactionModalContent: FC<NewTransactionModalContentProps> = ({
       method: "POST",
       url: `${API_URL}/system/transaction`,
       headers: {
-        Authorization: AUTH_HEADER,
         "Content-Type": "application/json",
       },
       data: data,
@@ -75,13 +87,29 @@ const NewTransactionModalContent: FC<NewTransactionModalContentProps> = ({
     }
   }
 
+  function set_states() {
+    set_fetching(false);
+    set_error_data("");
+    set_error_response_status(0);
+  }
+
   useEffect(() => {
-    if (Object.values(form_data).every((field) => field !== "")) {
+    if (Object.values(form_data).every((field) => field)) {
       set_button_disabled(false);
     } else {
       set_button_disabled(true);
     }
   }, [form_data]);
+
+  if (error_data) {
+    return (
+      <ErrorModalContent
+        error_response_status={error_response_status}
+        error_data={error_data}
+        handle_retry={() => handle_retry(error_response_status, set_states)}
+      />
+    );
+  }
 
   return (
     <>
@@ -190,7 +218,7 @@ const NewTransactionModalContent: FC<NewTransactionModalContentProps> = ({
           className={styles.submit_button}
           disabled={button_disabled}
         >
-          Submit
+          {fetching ? <span className={styles.loader_small}></span> : "Submit"}
         </button>
       </form>
     </>
