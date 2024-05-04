@@ -19,6 +19,11 @@
   }
 }
 
+@mixin disable_selection() {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .account_table {
   @include hide_scrollbar();
 
@@ -28,6 +33,7 @@
 
 .table_header {
   @include row_container(1.22em 0.7em);
+  @include disable_selection();
 
   min-width: 53rem;
 
@@ -36,9 +42,6 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   color: $text_gray;
-
-  user-select: none;
-  -webkit-user-select: none;
 }
 
 .rows_container {
@@ -70,8 +73,15 @@
 }
 
 .row_disabled {
+  @include disable_selection();
   opacity: 0.5;
   pointer-events: none;
+}
+
+.table_column {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .card_number {
@@ -98,6 +108,32 @@
   width: 8%;
 }
 
+// ───── Table Skeleton ───────────────────────────────────────────────────── //
+
+.skeleton_container {
+  margin: 1.5rem 1rem 0;
+}
+
+.skeleton_block {
+  height: 3.75rem;
+  border-radius: 0.5rem;
+  background-color: rgba($color: #3a3a3a, $alpha: 0.05);
+
+  animation: $content_loading_animation;
+
+  &:not(:last-child) {
+    margin-bottom: 1rem;
+  }
+}
+
+@for $i from 1 through 5 {
+  .block#{$i} {
+    animation-delay: 0.1s * $i;
+  }
+}
+
+// ───── Media queries ────────────────────────────────────────────────────── //
+
 @media (max-width: 880px) {
   .account_table {
     width: calc(100vw - 2rem);
@@ -112,6 +148,11 @@
   .rows_container {
     padding: 0;
   }
+
+  .skeleton_container {
+    margin: 0;
+    margin-top: 1.5rem;
+  }
 }
 
 @media (max-width: 640px) {
@@ -122,5 +163,13 @@
   .table_header,
   .rows_container {
     min-width: 42rem;
+  }
+
+  .rows_container {
+    height: 55vh;
+  }
+
+  .skeleton_block {
+    height: 3rem;
   }
 }

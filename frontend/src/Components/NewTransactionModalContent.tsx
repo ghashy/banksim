@@ -5,17 +5,35 @@ import { format_price } from "../helpers";
 import { useSelector } from "react-redux";
 import { RootState } from "../state/store";
 import { IAccount } from "../types";
+import useAxios from "../hooks/useAxios";
+import { API_URL, AUTH_HEADER } from "../config";
 
-const NewTransactionModalContent: FC = () => {
-  const [form_data, set_form_data] = useState({
+interface NewTransactionModalContentProps {
+  hide_window: () => void;
+}
+
+interface FormData {
+  from: string;
+  to: string;
+  amount: number | null;
+}
+
+const NewTransactionModalContent: FC<NewTransactionModalContentProps> = ({
+  hide_window,
+}) => {
+  const [form_data, set_form_data] = useState<FormData>({
     from: "",
     to: "",
-    amount: "",
+    amount: null,
   });
   const [button_disabled, set_button_disabled] = useState(true);
   const account_list = useSelector<RootState, IAccount[]>(
     (state) => state.account_list.account_list
   );
+  const store_card = useSelector<RootState, string>(
+    (state) => state.store_info.card.content
+  );
+  const { fetch_data: new_transaction } = useAxios();
 
   function handle_change(
     e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
@@ -26,7 +44,7 @@ const NewTransactionModalContent: FC = () => {
     if (name === "amount") {
       set_form_data((prev) => ({
         ...prev,
-        amount: only_digit,
+        amount: parseInt(only_digit),
       }));
       return;
     }
@@ -37,9 +55,24 @@ const NewTransactionModalContent: FC = () => {
     }));
   }
 
-  function handle_submit(e: FormEvent<HTMLFormElement>) {
+  async function handle_submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    console.log(form_data);
+
+    const data = JSON.stringify(form_data);
+
+    const response = await new_transaction({
+      method: "POST",
+      url: `${API_URL}/system/transaction`,
+      headers: {
+        Authorization: AUTH_HEADER,
+        "Content-Type": "application/json",
+      },
+      data: data,
+    });
+
+    if (response?.status === 200) {
+      hide_window();
+    }
   }
 
   useEffect(() => {
@@ -81,14 +114,20 @@ const NewTransactionModalContent: FC = () => {
             >
               card number
             </option>
-            {account_list.map((account, idx) => (
-              <option
-                value={account.card_number}
-                key={idx}
-              >
-                {account.card_number}
-              </option>
-            ))}
+            {form_data.to !== store_card.toString() && (
+              <option value={store_card}>{`${store_card} (store card)`}</option>
+            )}
+            {account_list
+              .filter((account) => account.exists)
+              .filter((account) => account.card_number !== form_data.to)
+              .map((account, idx) => (
+                <option
+                  value={account.card_number}
+                  key={idx}
+                >
+                  {account.card_number}
+                </option>
+              ))}
           </select>
         </div>
         <div className={styles.select_container}>
@@ -115,14 +154,20 @@ const NewTransactionModalContent: FC = () => {
             >
               card number
             </option>
-            {account_list.map((account, idx) => (
-              <option
-                value={account.card_number}
-                key={idx}
-              >
-                {account.card_number}
-              </option>
-            ))}
+            {form_data.from !== store_card.toString() && (
+              <option value={store_card}>{`${store_card} (store card)`}</option>
+            )}
+            {account_list
+              .filter((account) => account.exists)
+              .filter((account) => account.card_number !== form_data.from)
+              .map((account, idx) => (
+                <option
+                  value={account.card_number}
+                  key={idx}
+                >
+                  {account.card_number}
+                </option>
+              ))}
           </select>
         </div>
         <label
@@ -136,11 +181,7 @@ const NewTransactionModalContent: FC = () => {
           id="amount"
           name="amount"
           placeholder="10_000"
-          value={
-            form_data.amount
-              ? format_price(Number.parseFloat(form_data.amount))
-              : ""
-          }
+          value={form_data.amount ? format_price(form_data.amount) : ""}
           className={styles.text_input}
           onChange={handle_change}
         />

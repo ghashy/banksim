@@ -79,9 +79,15 @@ const ModalWindow: FC<ModalWindowProps> = ({ kind, hide_window }) => {
           className={styles.close_icon}
           onClick={hide_window}
         />
-        {kind === "new_transaction" && <NewTransactionModalContent />}
-        {kind === "new_account" && <NewAccountModalContent />}
-        {kind === "open_credit" && <OpenCreditModalContent />}
+        {kind === "new_transaction" && (
+          <NewTransactionModalContent hide_window={hide_window} />
+        )}
+        {kind === "new_account" && (
+          <NewAccountModalContent hide_window={hide_window} />
+        )}
+        {kind === "open_credit" && (
+          <OpenCreditModalContent hide_window={hide_window} />
+        )}
         {kind === "delete_account" && (
           <DeleteAccountModalContent hide_window={hide_window} />
         )}
