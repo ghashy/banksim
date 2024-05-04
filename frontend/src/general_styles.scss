@@ -37,6 +37,18 @@ a.active::after {
   scrollbar-width: none;
 }
 
+@keyframes content_loading {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+$content_loading_animation: content_loading 0.5s linear infinite
+  alternate-reverse;
+
 @media (max-width: 640px) {
   a.active {
     color: $accent;
