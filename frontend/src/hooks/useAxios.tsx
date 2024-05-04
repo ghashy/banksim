@@ -31,6 +31,7 @@ const useAxios = () => {
             case 400:
               console.error("Bad request:", error.response);
               set_response_status(400);
+              set_error_data("Bad request");
               break;
             case 401:
               console.error("Unathorized: ", error.response);
@@ -51,10 +52,7 @@ const useAxios = () => {
                 error.response
               );
               set_response_status(404);
-              break;
-            case 415:
-              console.error("Unsupported media type: ", error.response);
-              set_response_status(415);
+              set_error_data("Not found");
               break;
             case 500:
               if (attempts < MAX_RETRIES) {
@@ -74,9 +72,8 @@ const useAxios = () => {
                 error.response.status,
                 error.response.data
               );
-              set_error_data(
-                `Error status: ${error.status}, Error: ${error.response}`
-              );
+              set_response_status(error.response.status);
+              set_error_data(`${error.response.statusText}`);
           }
         } else if (error.request) {
           if (attempts < MAX_RETRIES) {
