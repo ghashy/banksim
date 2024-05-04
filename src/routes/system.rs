@@ -1,3 +1,4 @@
+use axum::extract::Path;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -30,6 +31,8 @@ enum SystemApiError {
     MutexLockError(#[from] TryLockError),
     #[error("Bank operation error: {0}")]
     BankOperationError(#[from] BankOperationError),
+    #[error("Not authorized request")]
+    NotAuthorized,
 }
 
 impl std::fmt::Debug for SystemApiError {
@@ -48,6 +51,9 @@ impl IntoResponse for SystemApiError {
             SystemApiError::BankOperationError(_) => {
                 StatusCode::BAD_REQUEST.into_response()
             }
+            SystemApiError::NotAuthorized => {
+                StatusCode::UNAUTHORIZED.into_response()
+            }
         }
     }
 }
@@ -65,9 +71,17 @@ pub fn system_router(state: AppState) -> Router<AppState> {
         .route("/store_card", routing::get(store_card))
         .route("/store_balance", routing::get(store_balance))
         .route("/list_transactions", routing::get(list_transactions))
-        .route("/subscribe_on_accounts", routing::get(ws_accounts))
-        .route("/subscribe_on_traces", routing::get(ws_traces))
+        .route("/ws_token", routing::get(get_ws_token))
         .layer(BasicAuthLayer { state })
+        .route("/subscribe_on_accounts/:token", routing::get(ws_accounts))
+        .route("/subscribe_on_traces/:token", routing::get(ws_traces))
+}
+
+#[tracing::instrument(name = "Retrieve a new ws token", skip_all)]
+async fn get_ws_token(State(app_state): State<AppState>) -> String {
+    let token = uuid::Uuid::new_v4();
+    app_state.ws_tokens.lock().await.insert(token.clone());
+    token.to_string()
 }
 
 #[tracing::instrument(name = "Add a new account to the bank", skip_all)]
@@ -155,8 +169,12 @@ async fn store_card(
 #[tracing::instrument(name = "Register a ws accounts subscriber", skip_all)]
 async fn ws_accounts(
     State(state): State<AppState>,
+    Path(ws_token): Path<uuid::Uuid>,
     ws: upgrade::IncomingUpgrade,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, SystemApiError> {
+    if !state.ws_tokens.lock().await.remove(&ws_token) {
+        return Err(SystemApiError::NotAuthorized);
+    }
     let (response, fut) = ws.upgrade().unwrap();
 
     tokio::task::spawn(async move {
@@ -165,17 +183,23 @@ async fn ws_accounts(
         }
     });
 
-    response
+    Ok(response)
 }
 
 #[tracing::instrument(name = "Register a ws traces subscriber", skip_all)]
 async fn ws_traces(
     State(state): State<AppState>,
+    Path(ws_token): Path<uuid::Uuid>,
     ws: upgrade::IncomingUpgrade,
 ) -> impl IntoResponse {
+    if !state.ws_tokens.lock().await.remove(&ws_token) {
+        return Err(SystemApiError::NotAuthorized);
+    }
+
     let (response, fut) = ws.upgrade().unwrap();
     state.ws_appender.add_subscriber(fut).await;
-    response
+
+    Ok(response)
 }
 
 // ───── Functions ────────────────────────────────────────────────────────── //

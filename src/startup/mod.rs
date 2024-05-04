@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::sync::Arc;
 
 use axum::routing::{self, IntoMakeService};
@@ -5,6 +6,7 @@ use axum::serve::Serve;
 use axum::Router;
 use http::{Method, StatusCode};
 use tokio::net::TcpListener;
+use tokio::sync::Mutex;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 
@@ -29,6 +31,7 @@ pub struct AppState {
     pub sessions: InteractionSessions,
     pub ws_appender: WebSocketAppender,
     pub http_client: reqwest::Client,
+    pub ws_tokens: Arc<Mutex<BTreeSet<uuid::Uuid>>>,
 }
 
 impl Application {
@@ -57,6 +60,7 @@ impl Application {
             sessions: InteractionSessions::new(),
             ws_appender,
             http_client: reqwest::Client::new(),
+            ws_tokens: Arc::new(Mutex::new(BTreeSet::new())),
         };
 
         let cors = CorsLayer::new()
