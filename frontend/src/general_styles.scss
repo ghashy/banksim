@@ -54,3 +54,29 @@ $content_loading_animation: content_loading 0.5s linear infinite
     color: $accent;
   }
 }
+
+// ───── Loaders ──────────────────────────────────────────────────────────── //
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@mixin loader_small() {
+  display: block;
+
+  width: 1.125rem;
+  height: 1.125rem;
+
+  margin: 0 auto;
+
+  border: 0.125rem solid $main_light;
+  border-top: 0.125rem solid $accent;
+  border-radius: 50%;
+
+  animation: spin 0.5s ease-in-out infinite;
+}
