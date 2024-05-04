@@ -28,7 +28,16 @@ interface IInterlocutor {
 }
 
 export interface IStoreInfo {
-  card: string;
-  balance: string;
-  emission: string;
+  card: {
+    content: string;
+    is_loading: boolean;
+  };
+  balance: {
+    content: string;
+    is_loading: boolean;
+  };
+  emission: {
+    content: string;
+    is_loading: boolean;
+  };
 }
