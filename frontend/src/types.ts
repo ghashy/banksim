@@ -44,3 +44,5 @@ export interface IStoreInfo {
     error: string;
   };
 }
+
+export type SocketEndpoints = "subscribe_on_accounts" | "subscribe_on_traces";
