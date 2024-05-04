@@ -1,5 +1,9 @@
 @import "./variables.scss";
 @import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap");
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("./fonts/JetBrainsMono[wght].ttf") format("truetype");
+}
 
 * {
   margin: 0;
