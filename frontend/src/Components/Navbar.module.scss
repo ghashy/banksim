@@ -87,6 +87,15 @@
   display: none;
 }
 
+.dash1 {
+  animation: $content_loading_animation;
+}
+
+.dash2 {
+  animation: $content_loading_animation;
+  animation-delay: 0.25s;
+}
+
 @media (max-width: 880px) {
   .navbar {
     padding-top: 0;
