@@ -5,7 +5,7 @@ import styles from "./MainPage.module.scss";
 import { FC, useState } from "react";
 import { RootState } from "../state/store";
 import ModalWindow from "../Components/ModalWindow";
-import { ActionKind } from "../types";
+import { ActionKind, SocketEndpoints } from "../types";
 import { reset_checked_itmes } from "../state/checked_items_slice";
 
 interface ModalVisible {
@@ -13,7 +13,15 @@ interface ModalVisible {
   visible: boolean;
 }
 
-const MainPage: FC = () => {
+interface MainPageProps {
+  get_account_list: () => Promise<void>;
+  connect_to_socket: (endpoit: SocketEndpoints) => Promise<void>;
+}
+
+const MainPage: FC<MainPageProps> = ({
+  get_account_list,
+  connect_to_socket,
+}) => {
   const [modal_visible, set_modal_visible] = useState<ModalVisible>({
     kind: "",
     visible: false,
@@ -84,7 +92,10 @@ const MainPage: FC = () => {
             )}
           </div>
         </div>
-        <AccountTable />
+        <AccountTable
+          get_account_list={get_account_list}
+          connect_to_socket={connect_to_socket}
+        />
       </div>
     </section>
   );
