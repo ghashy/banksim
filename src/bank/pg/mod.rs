@@ -511,6 +511,13 @@ impl BankDataBackend for PostgresStorage {
                     if db_error.message().eq("Not enough funds") {
                         return Err(BankOperationError::NotEnoughFunds);
                     }
+                    match db_error.message() {
+                        "Not enough funds" => return Err(BankOperationError::NotEnoughFunds),
+                        "Amount must be greater than 0" => return Err(BankOperationError::BadTransaction),
+                        "Sender and recipient cannot be the same" => return Err(BankOperationError::BadTransaction),
+                        "Sender or recipient account does not exist or is not active" => return Err(BankOperationError::AccountNotFound),
+                        _ => ()
+                    }
                 }
                 return Err(BankOperationError::UnexpectedError);
             }
@@ -616,7 +623,8 @@ impl BankDataBackend for PostgresStorage {
             .context("Failed to get a pg client from pg pool")?;
 
         let emission_account = self.emission_account(&db_client).await?;
-        self.balance(&db_client, &emission_account.card_number).await
+        self.balance(&db_client, &emission_account.card_number)
+            .await
     }
 
     async fn new_card_token(

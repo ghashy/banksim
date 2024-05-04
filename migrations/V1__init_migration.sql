@@ -27,31 +27,48 @@ CREATE OR REPLACE FUNCTION check_balance_before_transaction()
 RETURNS TRIGGER AS $$
 DECLARE
     balance INTEGER;
+    sender_exists BOOLEAN;
+    recipient_exists BOOLEAN;
 BEGIN
-        IF NEW.sender = 1 THEN
-            RETURN NEW;
-        END IF;
+    SELECT EXISTS(SELECT 1 FROM accounts WHERE id = NEW.sender AND is_existing = TRUE) INTO sender_exists;
+    SELECT EXISTS(SELECT 1 FROM accounts WHERE id = NEW.recipient AND is_existing = TRUE) INTO recipient_exists;
 
-        WITH received_amount AS (
-            SELECT recipient, COALESCE(SUM(amount), 0) AS received_total
-            FROM transactions
-            GROUP BY recipient
-        ),
-        spent_amount AS (
-            SELECT sender, COALESCE(SUM(amount), 0) AS spent_total
-            FROM transactions
-            GROUP BY sender
-        )
-        SELECT ra.received_total - sa.spent_total INTO balance
-        FROM accounts a
-        LEFT JOIN received_amount ra ON a.id = ra.recipient
-        LEFT JOIN spent_amount sa ON a.id = sa.sender
-        WHERE a.id = NEW.sender;
+    IF NOT sender_exists OR NOT recipient_exists THEN
+        RAISE EXCEPTION 'Sender or recipient account does not exist or is not active';
+    END IF;
+
+    IF NEW.sender = 1 THEN
+        RETURN NEW;
+    END IF;
+
+    IF NEW.sender = NEW.recipient THEN
+        RAISE EXCEPTION 'Sender and recipient cannot be the same';
+    END IF;
+
+    IF NEW.amount <= 0 THEN
+        RAISE EXCEPTION 'Amount must be greater than 0';
+    END IF;
+
+    WITH received_amount AS (
+        SELECT recipient, COALESCE(SUM(amount), 0) AS received_total
+        FROM transactions
+        GROUP BY recipient
+    ),
+    spent_amount AS (
+        SELECT sender, COALESCE(SUM(amount), 0) AS spent_total
+        FROM transactions
+        GROUP BY sender
+    )
+    SELECT ra.received_total - sa.spent_total INTO balance
+    FROM accounts a
+    LEFT JOIN received_amount ra ON a.id = ra.recipient
+    LEFT JOIN spent_amount sa ON a.id = sa.sender
+    WHERE a.id = NEW.sender;
 
 
-        IF balance < NEW.amount THEN
-            RAISE EXCEPTION 'Not enough funds';
-        END IF;
+    IF balance < NEW.amount THEN
+        RAISE EXCEPTION 'Not enough funds';
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
