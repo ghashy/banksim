@@ -31,13 +31,16 @@ export interface IStoreInfo {
   card: {
     content: string;
     is_loading: boolean;
+    error: string;
   };
   balance: {
     content: string;
     is_loading: boolean;
+    error: string;
   };
   emission: {
     content: string;
     is_loading: boolean;
+    error: string;
   };
 }
