@@ -7,20 +7,21 @@ import LogsPage from "./Pages/LogsPage";
 import AboutPage from "./Pages/AboutPage";
 import NotFoundPage from "./Pages/NotFoundPage";
 import { useEffect } from "react";
-import { API_URL } from "./config";
+import { API_URL, AUTH_HEADER } from "./config";
 import useAxios from "./hooks/useAxios";
 import { useDispatch } from "react-redux";
-import { set_acccount_list } from "./state/account_list_slice";
+import {
+  set_acccount_list,
+  set_accounts_loading,
+} from "./state/account_list_slice";
 import {
   set_store_balance,
+  set_store_balance_loading,
   set_store_card,
+  set_store_card_loading,
   set_store_emission,
+  set_store_emmision_loading,
 } from "./state/store_info_slice";
-
-const username = "ghashy";
-const password = "terminalpassword";
-const token = btoa(`${username}:${password}`);
-const auth_header = `Basic ${token}`;
 
 type GetEndpoints =
   | "list_accounts"
@@ -37,7 +38,7 @@ function App() {
       method: "GET",
       url: `${API_URL}/system/${endpoint}`,
       headers: {
-        Authorization: auth_header,
+        Authorization: AUTH_HEADER,
       },
     });
 
@@ -45,32 +46,82 @@ function App() {
       switch (endpoint) {
         case "list_accounts":
           dispatch(set_acccount_list(response.data.accounts));
-          break;
+          dispatch(set_accounts_loading(false));
+          return;
         case "emission":
           dispatch(set_store_emission(response.data));
-          break;
+          dispatch(set_store_emmision_loading(false));
+          return;
         case "store_card":
           dispatch(set_store_card(response.data));
-          break;
+          dispatch(set_store_card_loading(false));
+          return;
         case "store_balance":
           dispatch(set_store_balance(response.data));
-          break;
+          dispatch(set_store_balance_loading(false));
+          return;
       }
+    }
+
+    switch (endpoint) {
+      case "list_accounts":
+        dispatch(set_accounts_loading(false));
+        break;
+      case "emission":
+        dispatch(set_store_emmision_loading(false));
+        break;
+      case "store_card":
+        dispatch(set_store_card_loading(false));
+        break;
+      case "store_balance":
+        dispatch(set_store_balance_loading(false));
+        break;
     }
   }
 
+  // Get data
   useEffect(() => {
     // Get account list
     get_data("list_accounts");
 
     // Get store info
-    async function get_store_info() {
-      await get_data("emission");
-      await get_data("store_balance");
-      await get_data("store_card");
+    try {
+      Promise.all([
+        get_data("emission"),
+        get_data("store_balance"),
+        get_data("store_card"),
+      ]);
+    } catch (error) {
+      console.error(error);
     }
-    get_store_info();
   }, []);
+
+  //WebSocket connections
+  // useEffect(() => {
+  //   const socket = new WebSocket(
+  //     `ws://localhost:15100/system/subscribe_on_traces`
+  //   );
+
+  //   socket.onerror = (e: Event) => {
+  //     console.log(e);
+  //   };
+
+  //   socket.onopen = () => {
+  //     console.log("WebSocket connection opened");
+  //   };
+
+  //   socket.onmessage = (e: MessageEvent) => {
+  //     console.log(e.data);
+  //   };
+
+  //   socket.onclose = () => {
+  //     console.log("WebSocket connection closed");
+  //   };
+
+  //   return () => {
+  //     socket.close();
+  //   };
+  // }, []);
 
   return (
     <BrowserRouter>
