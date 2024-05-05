@@ -1,7 +1,7 @@
 ################################################################################
 # Create a stage for building the application.
 
-ARG RUST_VERSION=1.76
+ARG RUST_VERSION=1.78
 FROM rust:${RUST_VERSION}-slim-bookworm AS build
 
 # This ARG should be after `FROM` clause
