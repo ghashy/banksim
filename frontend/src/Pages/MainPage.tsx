@@ -14,14 +14,10 @@ interface ModalVisible {
 }
 
 interface MainPageProps {
-  get_account_list: () => Promise<void>;
   connect_to_socket: (endpoit: SocketEndpoints) => Promise<void>;
 }
 
-const MainPage: FC<MainPageProps> = ({
-  get_account_list,
-  connect_to_socket,
-}) => {
+const MainPage: FC<MainPageProps> = ({ connect_to_socket }) => {
   const [modal_visible, set_modal_visible] = useState<ModalVisible>({
     kind: "",
     visible: false,

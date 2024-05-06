@@ -222,12 +222,7 @@ function App() {
         >
           <Route
             index
-            element={
-              <MainPage
-                get_account_list={get_account_lsit}
-                connect_to_socket={connect_to_socket}
-              />
-            }
+            element={<MainPage connect_to_socket={connect_to_socket} />}
           />
           <Route
             path="transactions"
