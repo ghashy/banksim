@@ -59,16 +59,16 @@ BEGIN
         FROM transactions
         GROUP BY sender
     )
-    SELECT ra.received_total - sa.spent_total INTO balance
+    SELECT COALESCE(ra.received_total, 0) - COALESCE(sa.spent_total, 0) INTO balance
     FROM accounts a
     LEFT JOIN received_amount ra ON a.id = ra.recipient
     LEFT JOIN spent_amount sa ON a.id = sa.sender
     WHERE a.id = NEW.sender;
 
-
     IF balance < NEW.amount THEN
         RAISE EXCEPTION 'Not enough funds';
     END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
