@@ -1,10 +1,33 @@
 #!/usr/bin/env bash
 
-docker build --tag ghashy/banksim:0.1 .
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+password=$1
 
+if [ -z "${password}" ]; then
+    echo "password is unset or set to the empty string"
+    exit
+fi
+
+docker stop banksim
+sleep 0.1
+docker stop banksim-pg
+sleep 0.1
 docker rm banksim
+sleep 0.1
 docker rm banksim-pg
+sleep 0.1
 docker volume rm banksim-pg-data
+printf "Old containers removed"
 
-./scripts/run_pg_container
-./scripts/run_banksim_container
+if docker build --tag ghashy/banksim:0.1 . ; then
+    printf "${GREEN}banksim built successfully${NC}\n"
+else
+    printf "${RED}banksim build failed${NC}\n"
+    exit
+fi
+
+source ./scripts/run_pg_container $password
+sleep 5
+source ./scripts/run_banksim_container
