@@ -5,7 +5,7 @@ interface InitialState {
 }
 
 const initial_state: InitialState = {
-  is_open: false,
+  is_open: true,
 };
 
 const account_socket_slice = createSlice({

@@ -8,14 +8,10 @@ import { IAccount, SocketEndpoints } from "../types";
 import TableSkeleton from "./TableSkeleton";
 
 interface AccountTableProps {
-  get_account_list: () => Promise<void>;
   connect_to_socket: (endpoit: SocketEndpoints) => Promise<void>;
 }
 
-const AccountTable: FC<AccountTableProps> = ({
-  get_account_list,
-  connect_to_socket,
-}) => {
+const AccountTable: FC<AccountTableProps> = ({ connect_to_socket }) => {
   const account_list = useSelector<RootState, IAccount[]>(
     (state) => state.account_list.account_list
   );
@@ -43,12 +39,6 @@ const AccountTable: FC<AccountTableProps> = ({
     //FIXME shitty fetching logic
     set_fetching(false);
   }
-
-  useEffect(() => {
-    if (account_socket_open) {
-      get_account_list();
-    }
-  }, [account_socket_open]);
 
   useEffect(() => {
     set_sorted_list(

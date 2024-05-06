@@ -39,6 +39,8 @@ function App() {
   const dispatch = useDispatch();
 
   async function get_account_lsit() {
+    dispatch(set_accounts_loading(true));
+
     const response = await fetch_list({
       method: "GET",
       url: `${API_URL}/system/list_accounts`,
@@ -112,6 +114,7 @@ function App() {
         switch (endpoint) {
           case "subscribe_on_accounts":
             dispatch(set_account_socket_open(true));
+            get_account_lsit();
             console.log("Account WebSocket connection opened");
             break;
           case "subscribe_on_traces":
@@ -176,7 +179,7 @@ function App() {
     connect_to_socket("subscribe_on_traces");
 
     //Get account list
-    get_account_lsit();
+    // get_account_lsit();
 
     // Get store info
     try {

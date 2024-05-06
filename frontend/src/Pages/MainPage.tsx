@@ -92,10 +92,7 @@ const MainPage: FC<MainPageProps> = ({
             )}
           </div>
         </div>
-        <AccountTable
-          get_account_list={get_account_list}
-          connect_to_socket={connect_to_socket}
-        />
+        <AccountTable connect_to_socket={connect_to_socket} />
       </div>
     </section>
   );

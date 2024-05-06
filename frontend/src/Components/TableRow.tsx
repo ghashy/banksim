@@ -14,20 +14,19 @@ const TableRow: FC<TableRowProps> = ({ props }) => {
   const [row_class_names, set_row_class_names] = useState(
     `${styles.table_row} ${!props.exists && styles.row_disabled}`
   );
-
   const checked_items = useSelector<RootState, string[]>(
     (state) => state.checked_items.items
   );
 
   useEffect(() => {
     if (checked_items.includes(props.card_number)) {
-      set_row_class_names(`${row_class_names} ${styles.row_selected}`);
+      set_row_class_names(`${styles.table_row} ${styles.row_selected}`);
     } else {
       set_row_class_names(
         `${styles.table_row} ${!props.exists && styles.row_disabled}`
       );
     }
-  }, [checked_items]);
+  }, [checked_items, props.exists]);
 
   return (
     <div className={row_class_names}>
