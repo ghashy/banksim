@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-password=$1
-
-docker run --network mynet --ip 172.18.0.5 --name banksim-pg -d -v banksim-pg-data:/var/lib/postgresql/data -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_DB=banksim -e POSTGRES_PASSWORD=$password postgres:16.2-alpine3.19

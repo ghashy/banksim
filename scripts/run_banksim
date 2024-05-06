@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-docker run --network mynet --ip 172.18.0.6 --name banksim -v ./secrets:/app/secrets -e BANKSIM_CONFIG_FILE="/app/secrets/config.yaml" -e POSTGRES_PASSWORD_FILE="/app/secrets/postgres_password.txt" -e TERMINAL_PASSWORD_FILE="/app/secrets/terminal_password.txt" -e DATA_BACKEND_TYPE="postgres" ghashy/banksim:0.1

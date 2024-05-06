@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+docker build --tag ghashy/banksim:0.1 .
+
+docker rm banksim
+docker rm banksim-pg
+docker volume rm banksim-pg-data
+
+./scripts/run_pg_container
+./scripts/run_banksim_container
