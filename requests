@@ -16,7 +16,7 @@ curl -v -X POST localhost:15100/session/init/payment \
         "token": "802f6f4cbb6f4c3e14cd60e5bc3ab2aa455c9c12369afd01443edc973221ce4c"
     }'
 
-curl -X POST --location "http://localhost:15100/api/InitCardTokenRegistration" \
+curl -v -X POST --location "http://172.18.0.6:15100/session/init/card_token_reg" \
     -H "Content-Type: application/json" \
     --data-raw '
 
@@ -24,5 +24,5 @@ curl -X POST --location "http://localhost:15100/api/InitCardTokenRegistration" \
             "notification_url":"https://docker.com",
             "success_url":"https://google.com",
             "fail_url":"https://yandex.ru",
-            "token":"8de3c11509eba15d042d0bddf9457a4f2ea90379676aa88b42a024fbf679ca19"
+            "token":"be145315f24023418aba56f116caa7327505ca5f0416ec4af2a4e948f7234e76"
         }'
