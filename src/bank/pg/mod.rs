@@ -645,6 +645,7 @@ impl BankDataBackend for PostgresStorage {
             .bind(&db_client, &card.as_ref(), &token)
             .await
             .context("Failed to insert new card token into pg")?;
+        self.notify();
         Ok(token)
     }
 
