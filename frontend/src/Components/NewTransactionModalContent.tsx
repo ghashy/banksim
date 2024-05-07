@@ -144,7 +144,7 @@ const NewTransactionModalContent: FC<NewTransactionModalContentProps> = ({
               card number
             </option>
             {form_data.to !== store_card.toString() && (
-              <option value={store_card}>{`${store_card} (store card)`}</option>
+              <option value={store_card}>{`${store_card} (Store card)`}</option>
             )}
             {account_list
               .filter((account) => account.exists)
@@ -154,7 +154,7 @@ const NewTransactionModalContent: FC<NewTransactionModalContentProps> = ({
                   value={account.card_number}
                   key={idx}
                 >
-                  {account.card_number}
+                  {`${account.card_number} (${account.username})`}
                 </option>
               ))}
           </select>
@@ -184,7 +184,7 @@ const NewTransactionModalContent: FC<NewTransactionModalContentProps> = ({
               card number
             </option>
             {form_data.from !== store_card.toString() && (
-              <option value={store_card}>{`${store_card} (store card)`}</option>
+              <option value={store_card}>{`${store_card} (Store card)`}</option>
             )}
             {account_list
               .filter((account) => account.exists)
@@ -194,7 +194,7 @@ const NewTransactionModalContent: FC<NewTransactionModalContentProps> = ({
                   value={account.card_number}
                   key={idx}
                 >
-                  {account.card_number}
+                  {`${account.card_number} (${account.username})`}
                 </option>
               ))}
           </select>
