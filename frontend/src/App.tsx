@@ -178,9 +178,6 @@ function App() {
     connect_to_socket("subscribe_on_accounts");
     connect_to_socket("subscribe_on_traces");
 
-    //Get account list
-    // get_account_lsit();
-
     // Get store info
     try {
       Promise.all([
