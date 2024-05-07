@@ -24,4 +24,5 @@
   font-size: 1.875rem;
   font-weight: 600;
   margin-bottom: 2rem;
+  padding: 0 clamp(0px, (100vw - 70rem) / 2, 9999px);
 }
