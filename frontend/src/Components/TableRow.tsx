@@ -29,30 +29,39 @@ const TableRow: FC<TableRowProps> = ({ props }) => {
   }, [checked_items, props.exists]);
 
   return (
-    <div className={row_class_names}>
+    <label
+      htmlFor={props.card_number}
+      className={row_class_names}
+    >
       <CustomCheckbox
         card_number={props.card_number}
         disabled={!props.exists}
       />
       <p className={`${styles.table_column} ${styles.card_number}`}>
-        {props.card_number}
+        <span className={styles.column_content}>{props.card_number}</span>
       </p>
       <p className={`${styles.table_column} ${styles.transactions}`}>
-        {props.transactions.length}
+        <span className={styles.column_content}>
+          {props.transactions.length}
+        </span>
       </p>
       <p className={`${styles.table_column} ${styles.balance}`}>
         {format_price(props.balance)}
       </p>
       <p className={`${styles.table_column} ${styles.username}`}>
-        {props.username}
+        <span className={styles.column_content}>{props.username}</span>
       </p>
       <p className={`${styles.table_column} ${styles.tokens}`}>
-        {props.tokens.length === 0 ? "No tokens" : "Some tokens"}
+        <span className={styles.column_content}>
+          {props.tokens.length === 0 ? "No tokens" : "Some tokens"}
+        </span>
       </p>
       <p className={`${styles.table_column} ${styles.exists}`}>
-        {props.exists ? "True" : "False"}
+        <span className={styles.column_content}>
+          {props.exists ? "True" : "False"}
+        </span>
       </p>
-    </div>
+    </label>
   );
 };
 

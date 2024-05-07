@@ -60,8 +60,18 @@
   @include row_container(1em 0.7em);
 
   font-weight: 500;
-
   border: 1px solid transparent;
+  cursor: pointer;
+
+  .table_column {
+    .column_content {
+      cursor: text;
+    }
+  }
+
+  &:hover {
+    border: 1px solid $accent;
+  }
 
   &:not(:last-child) {
     margin-bottom: 1rem;
