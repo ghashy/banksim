@@ -1,7 +1,9 @@
+use axum::body::Body;
 use axum::extract::Path;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use axum::response::Response;
 use axum::routing;
 use axum::Json;
 use axum::Router;
@@ -48,9 +50,10 @@ impl IntoResponse for SystemApiError {
             SystemApiError::MutexLockError(_) => {
                 StatusCode::INTERNAL_SERVER_ERROR.into_response()
             }
-            SystemApiError::BankOperationError(_) => {
-                StatusCode::BAD_REQUEST.into_response()
-            }
+            SystemApiError::BankOperationError(e) => Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .body(Body::from(e.to_string()))
+                .unwrap_or(StatusCode::BAD_REQUEST.into_response()),
             SystemApiError::NotAuthorized => {
                 StatusCode::UNAUTHORIZED.into_response()
             }
