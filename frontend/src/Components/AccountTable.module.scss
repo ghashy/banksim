@@ -127,6 +127,18 @@
   margin: 2.75rem 1rem 0;
   p {
     font-size: 1.125rem;
+
+    span {
+      .dot1 {
+        animation: content_loading 0.5s linear infinite alternate-reverse;
+      }
+      .dot2 {
+        animation: content_loading 0.5s linear 0.2s infinite alternate-reverse;
+      }
+      .dot3 {
+        animation: content_loading 0.5s linear 0.4s infinite alternate-reverse;
+      }
+    }
   }
 }
 

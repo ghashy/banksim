@@ -7,7 +7,7 @@ import LogsPage from "./Pages/LogsPage";
 import AboutPage from "./Pages/AboutPage";
 import NotFoundPage from "./Pages/NotFoundPage";
 import { useEffect } from "react";
-import { API_URL, AUTH_HEADER } from "./config";
+import { API_URL, AUTH_HEADER, MAX_RETRIES, RETRY_DELAY_MS } from "./config";
 import useAxios from "./hooks/useAxios";
 import { useDispatch } from "react-redux";
 import {
@@ -29,75 +29,150 @@ import {
 import { set_logs } from "./state/logs_slice";
 import { set_account_socket_open } from "./state/account_socket_slice";
 import { SocketEndpoints } from "./types";
+import { wait } from "./helpers";
 
 function App() {
-  const { fetch_data: fetch_list, error_data: list_error } = useAxios();
-  const { fetch_data: fetch_card, error_data: card_error } = useAxios();
-  const { fetch_data: fetch_emission, error_data: emission_error } = useAxios();
-  const { fetch_data: fetch_balance, error_data: balance_error } = useAxios();
+  const { fetch_data: fetch_list } = useAxios();
+  const { fetch_data: fetch_card } = useAxios();
+  const { fetch_data: fetch_emission } = useAxios();
+  const { fetch_data: fetch_balance } = useAxios();
   const { fetch_data: fetch_token } = useAxios();
   const dispatch = useDispatch();
 
   async function get_account_lsit() {
     dispatch(set_accounts_loading(true));
+    let attempts = 1;
 
-    const response = await fetch_list({
-      method: "GET",
-      url: `${API_URL}/system/list_accounts`,
-      headers: {
-        Authorization: AUTH_HEADER,
-      },
-    });
+    async function recursive_call() {
+      const response = await fetch_list({
+        method: "GET",
+        url: `${API_URL}/system/list_accounts`,
+        headers: {
+          Authorization: AUTH_HEADER,
+        },
+      });
 
-    if (response?.status === 200) {
-      dispatch(set_acccount_list(response.data.accounts));
-      dispatch(set_accounts_loading(false));
+      if (response.ok) {
+        dispatch(set_accounts_error(""));
+        dispatch(set_acccount_list(response.val.data.accounts));
+        dispatch(set_accounts_loading(false));
+      } else if (
+        response.err &&
+        response.val.recursive &&
+        attempts < MAX_RETRIES
+      ) {
+        attempts++;
+        await wait(RETRY_DELAY_MS);
+        recursive_call();
+      } else {
+        dispatch(set_accounts_loading(false));
+        dispatch(set_accounts_error(response.val.message));
+      }
     }
+
+    recursive_call();
   }
 
   async function get_store_card() {
-    const response = await fetch_card({
-      method: "GET",
-      url: `${API_URL}/system/store_card`,
-      headers: {
-        Authorization: AUTH_HEADER,
-      },
-    });
+    dispatch(set_store_card_loading(true));
+    let attempts = 1;
 
-    if (response?.status === 200) {
-      dispatch(set_store_card(response.data));
-      dispatch(set_store_card_loading(false));
+    async function recursive_call() {
+      const response = await fetch_card({
+        method: "GET",
+        url: `${API_URL}/system/store_card`,
+        headers: {
+          Authorization: AUTH_HEADER,
+        },
+      });
+
+      if (response.ok) {
+        dispatch(set_store_card_error(""));
+        dispatch(set_store_card(response.val.data));
+        dispatch(set_store_card_loading(false));
+      } else if (
+        response.err &&
+        response.val.recursive &&
+        attempts < MAX_RETRIES
+      ) {
+        attempts++;
+        await wait(RETRY_DELAY_MS);
+        recursive_call();
+      } else {
+        dispatch(set_store_card_loading(false));
+        dispatch(set_store_card_error(response.val.message));
+      }
     }
+
+    recursive_call();
   }
 
   async function get_store_balance() {
-    const response = await fetch_balance({
-      method: "GET",
-      url: `${API_URL}/system/store_balance`,
-      headers: {
-        Authorization: AUTH_HEADER,
-      },
-    });
+    dispatch(set_store_balance_loading(false));
+    let attempts = 1;
 
-    if (response?.status === 200) {
-      dispatch(set_store_balance(response.data));
-      dispatch(set_store_balance_loading(false));
+    async function recursive_call() {
+      const response = await fetch_balance({
+        method: "GET",
+        url: `${API_URL}/system/store_balance`,
+        headers: {
+          Authorization: AUTH_HEADER,
+        },
+      });
+
+      if (response.ok) {
+        dispatch(set_store_balance_error(""));
+        dispatch(set_store_balance(response.val.data));
+        dispatch(set_store_balance_loading(false));
+      } else if (
+        response.err &&
+        response.val.recursive &&
+        attempts < MAX_RETRIES
+      ) {
+        attempts++;
+        await wait(RETRY_DELAY_MS);
+        recursive_call();
+      } else {
+        dispatch(set_store_balance_loading(false));
+        dispatch(set_store_balance_error(response.val.message));
+      }
     }
+
+    recursive_call();
   }
 
   async function get_store_emission() {
-    const response = await fetch_emission({
-      method: "GET",
-      url: `${API_URL}/system/emission`,
-      headers: {
-        Authorization: AUTH_HEADER,
-      },
-    });
+    dispatch(set_store_emmision_loading(true));
+    let attempts = 1;
 
-    if (response?.status === 200) {
-      dispatch(set_store_emission(response.data));
-      dispatch(set_store_emmision_loading(false));
+    async function recursive_call() {
+      const response = await fetch_emission({
+        method: "GET",
+        url: `${API_URL}/system/emission`,
+        headers: {
+          Authorization: AUTH_HEADER,
+        },
+      });
+
+      if (response.ok) {
+        dispatch(set_store_emission_error(""));
+        dispatch(set_store_emission(response.val.data));
+        dispatch(set_store_emmision_loading(false));
+      } else if (
+        response.err &&
+        response.val.recursive &&
+        attempts < MAX_RETRIES
+      ) {
+        attempts++;
+        await wait(RETRY_DELAY_MS);
+        recursive_call();
+      } else {
+        dispatch(set_store_emmision_loading(false));
+        dispatch(set_store_emission_error(response.val.message));
+      }
     }
+
+    recursive_call();
   }
 
   async function connect_to_socket(endpoint: SocketEndpoints) {
@@ -153,6 +228,7 @@ function App() {
       switch (endpoint) {
         case "subscribe_on_accounts":
           console.error("Accounts token fetch failed, try again");
+          dispatch(set_account_socket_open(false));
           break;
         case "subscribe_on_traces":
           console.error("Logs token fetch failed, try again");
@@ -169,7 +245,12 @@ function App() {
         Authorization: AUTH_HEADER,
       },
     });
-    return response?.data;
+
+    if (response.ok) {
+      return response.val.data;
+    } else {
+      return null;
+    }
   }
 
   // Get data
@@ -189,26 +270,6 @@ function App() {
       console.error(error);
     }
   }, []);
-
-  // Set errors
-  useEffect(() => {
-    if (list_error) {
-      dispatch(set_accounts_error(list_error));
-      dispatch(set_accounts_loading(false));
-    }
-    if (card_error) {
-      dispatch(set_store_card_error(card_error));
-      dispatch(set_store_card_loading(false));
-    }
-    if (balance_error) {
-      dispatch(set_store_balance_error(balance_error));
-      dispatch(set_store_balance_loading(false));
-    }
-    if (emission_error) {
-      dispatch(set_store_emission_error(emission_error));
-      dispatch(set_store_emmision_loading(false));
-    }
-  }, [list_error, card_error, emission_error, balance_error]);
 
   return (
     <BrowserRouter>

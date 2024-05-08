@@ -1,28 +1,28 @@
-import { useState } from "react";
-import { MAX_RETRIES, RETRY_DELAY_MS } from "../config";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import { wait } from "../helpers";
+import { Ok, Err, Result } from "ts-results";
+import { FetchError } from "../types";
 
 const useAxios = () => {
-  const [response_status, set_response_status] = useState(0);
-  const [error_data, set_error_data] = useState<string>("");
-
   const fetch_data = async (
-    config: AxiosRequestConfig,
-    attempts: number = 1
-  ) => {
-    let response: AxiosResponse | undefined = undefined;
+    config: AxiosRequestConfig
+  ): Promise<Result<AxiosResponse, FetchError>> => {
+    let err: FetchError = { message: "Unknow error" };
+
     try {
+      let response: AxiosResponse;
+
       switch (config.method) {
         case "GET":
           response = await axios.get(config.url || "", config);
-          return response;
+          return new Ok(response);
         case "POST":
           response = await axios.post(config.url || "", config.data, config);
-          return response;
+          return new Ok(response);
         case "DELETE":
           response = await axios.delete(config.url || "", config);
-          return response;
+          return new Ok(response);
+        default:
+          return new Err({ message: "Unsupported HTTP method" });
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -30,75 +30,77 @@ const useAxios = () => {
           switch (error.response.status) {
             case 400:
               console.error("Bad request:", error.response);
-              set_response_status(400);
-              set_error_data("Bad request");
-              break;
+              err = {
+                err_status: error.response.status,
+                message: error.response.data,
+              };
+              return new Err(err);
             case 401:
               console.error("Unathorized: ", error.response);
-              set_response_status(401);
-              set_error_data("Unathorized. Please, authorize and try again");
-              break;
+              err = {
+                err_status: error.response.status,
+                message: "Unathorized. Please, authorize and try again",
+              };
+              return new Err(err);
             case 403:
               console.error("Forbidden:", error.response);
-              set_response_status(403);
-              set_error_data(
-                "Forbidden. You don't have rights to make this request"
-              );
-              break;
+              err = {
+                err_status: error.response.status,
+                message:
+                  "Forbidden. You don't have rights to make this request",
+              };
+              return new Err(err);
             case 404:
               console.error(
                 "Not found, check the request: ",
                 error.config?.url,
                 error.response
               );
-              set_response_status(404);
-              set_error_data("Not found");
-              break;
+              err = {
+                err_status: error.response.status,
+                message: "Not found, check the request",
+              };
+              return new Err(err);
             case 500:
-              if (attempts < MAX_RETRIES) {
-                await wait(RETRY_DELAY_MS);
-                fetch_data(config, attempts + 1);
-              } else {
-                console.error("Server error:", error.response);
-                set_response_status(500);
-                set_error_data(
-                  "Internal server error. Please, try again later"
-                );
-              }
-              break;
+              console.error("Server error:", error.response);
+              err = {
+                err_status: error.response.status,
+                message: "Internal server error. Please, try again later",
+                recursive: true,
+              };
+              return new Err(err);
             default:
-              console.error(
-                "API error: ",
-                error.response.status,
-                error.response.data
-              );
-              set_response_status(error.response.status);
-              set_error_data(`${error.response.statusText}`);
+              console.error("API error: ", error.response.status, error);
+              err = {
+                err_status: error.response.status,
+                message: error.response.statusText,
+              };
+              return new Err(err);
           }
         } else if (error.request) {
-          if (attempts < MAX_RETRIES) {
-            await wait(RETRY_DELAY_MS);
-            fetch_data(config, attempts + 1);
-          } else {
-            console.error("Server is not responding:", error.message);
-            set_error_data(
-              "Server isn't responding. Please, reload the page and try again"
-            );
-          }
+          err = {
+            message: "Server isn't responding. Please, try again",
+            recursive: true,
+          };
+          return new Err(err);
         } else {
-          console.error("API Error: Reqest setup error:", error.message);
+          console.error("API Error", error);
+          err = {
+            message: `API error: ${error.message}`,
+          };
+          return new Err(err);
         }
       } else {
         console.error("Non-Axios:", error);
+        err = {
+          message: "Unknown Non-Axios error",
+        };
+        return new Err(err);
       }
     }
   };
 
   return {
-    error_data,
-    set_error_data,
-    response_status,
-    set_response_status,
     fetch_data,
   };
 };

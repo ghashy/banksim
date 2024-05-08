@@ -114,6 +114,39 @@
   font-size: 1.125rem;
   width: fit-content;
   margin: 2.5rem auto 0;
+
+  span {
+    .dot1 {
+      animation: content_loading 0.5s linear infinite alternate-reverse;
+    }
+    .dot2 {
+      animation: content_loading 0.5s linear 0.2s infinite alternate-reverse;
+    }
+    .dot3 {
+      animation: content_loading 0.5s linear 0.4s infinite alternate-reverse;
+    }
+  }
+}
+
+.info_container {
+  width: fit-content;
+  margin: 2.5rem auto 0;
+}
+
+.info_status {
+  font-size: 1.125rem;
+
+  &:not(:last-child) {
+    margin-bottom: 0.5em;
+  }
+}
+
+.status_success {
+  color: $success;
+}
+
+.status_fail {
+  color: $warning;
 }
 
 .submit_button {

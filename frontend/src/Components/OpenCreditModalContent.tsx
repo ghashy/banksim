@@ -2,10 +2,9 @@ import styles from "./ModalWindow.module.scss";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../state/store";
 import { FC, FormEvent, useEffect, useState } from "react";
-import { format_price, handle_retry } from "../helpers";
+import { format_price } from "../helpers";
 import useAxios from "../hooks/useAxios";
 import { API_URL, AUTH_HEADER } from "../config";
-import ErrorModalContent from "./ErrorModalContent";
 import { reset_checked_itmes } from "../state/checked_items_slice";
 
 interface OpenCreditModalContentProps {
@@ -24,16 +23,12 @@ const OpenCreditModalContent: FC<OpenCreditModalContentProps> = ({
   });
   const [button_disabled, set_button_disabled] = useState(true);
   const [fetching, set_fetching] = useState(false);
+  const [fetching_info_visible, set_fetching_info_visible] = useState(false);
+  const [fetch_info, set_fetch_info] = useState<string[]>([]);
   const card_numbers = useSelector<RootState, string[]>(
     (state) => state.checked_items.items
   ).filter((card_number) => card_number !== "01");
-  const {
-    fetch_data: open_credit,
-    error_data: error_data,
-    set_error_data: set_error_data,
-    response_status: error_response_status,
-    set_response_status: set_error_response_status,
-  } = useAxios();
+  const { fetch_data: open_credit } = useAxios();
   const dispatch = useDispatch();
 
   function handle_change(e: React.ChangeEvent<HTMLInputElement>) {
@@ -51,8 +46,6 @@ const OpenCreditModalContent: FC<OpenCreditModalContentProps> = ({
     if (fetching) {
       return;
     }
-
-    set_fetching(true);
 
     async function credit(card_number: string) {
       const data = JSON.stringify({
@@ -75,20 +68,23 @@ const OpenCreditModalContent: FC<OpenCreditModalContentProps> = ({
 
     const requests = card_numbers.map((card_number) => credit(card_number));
 
-    Promise.all(requests)
-      .then((response: any[]) => {
-        if (response.every((answer) => answer)) {
-          dispatch(reset_checked_itmes());
-          hide_window();
-        }
-      })
-      .catch((err) => console.error(err));
+    set_fetching(true);
+    set_fetching_info_visible(true);
+
+    for await (const response of requests) {
+      if (response.ok) {
+        set_fetch_info((prev) => [...prev, `Success`]);
+      } else {
+        set_fetch_info((prev) => [...prev, `Fail`]);
+      }
+    }
+
+    set_fetching(false);
   }
 
-  function set_states() {
-    set_fetching(false);
-    set_error_data("");
-    set_error_response_status(0);
+  function handle_return() {
+    dispatch(reset_checked_itmes());
+    hide_window();
   }
 
   useEffect(() => {
@@ -99,49 +95,77 @@ const OpenCreditModalContent: FC<OpenCreditModalContentProps> = ({
     }
   }, [form_data]);
 
-  if (error_data) {
-    return (
-      <ErrorModalContent
-        error_response_status={error_response_status}
-        error_data={error_data}
-        handle_retry={() => handle_retry(error_response_status, set_states)}
-      />
-    );
-  }
-
   return (
     <>
       <h2 className={styles.h2}>
         Open {card_numbers.length === 1 ? "Credit" : "Credits"}
       </h2>
-      <form
-        onSubmit={handle_submit}
-        className={styles.submit_form}
-      >
-        <p
-          className={styles.info_message}
-          style={{
-            marginBottom: "2rem",
-          }}
+      {fetching_info_visible ? (
+        <>
+          <div className={styles.info_container}>
+            {card_numbers.map((card_number, idx) => {
+              return (
+                <p
+                  key={idx}
+                  className={styles.info_status}
+                >
+                  Credit to {card_number}:{" "}
+                  <span
+                    className={`${
+                      fetch_info[idx] === "Success" && styles.status_success
+                    } ${fetch_info[idx] === "Fail" && styles.status_fail}`}
+                  >
+                    {fetch_info[idx] ? fetch_info[idx] : "processing..."}
+                  </span>
+                </p>
+              );
+            })}
+          </div>
+          <div
+            className={`${styles.button} ${styles.retry_button}`}
+            onClick={handle_return}
+          >
+            {fetching ? (
+              <span className={styles.loader_small}></span>
+            ) : (
+              "Got it"
+            )}
+          </div>
+        </>
+      ) : (
+        <form
+          onSubmit={handle_submit}
+          className={styles.submit_form}
         >
-          How much money do you want to credit?
-        </p>
-        <input
-          type="text"
-          name="password"
-          autoFocus
-          value={form_data.amount ? format_price(form_data.amount) : ""}
-          className={styles.text_input}
-          onChange={handle_change}
-        />
-        <button
-          type="submit"
-          className={styles.submit_button}
-          disabled={button_disabled}
-        >
-          {fetching ? <span className={styles.loader_small}></span> : "Submit"}
-        </button>
-      </form>
+          <p
+            className={styles.info_message}
+            style={{
+              marginBottom: "2rem",
+            }}
+          >
+            How much money do you want to credit?
+          </p>
+          <input
+            type="text"
+            name="password"
+            autoFocus
+            value={form_data.amount ? format_price(form_data.amount) : ""}
+            className={styles.text_input}
+            onChange={handle_change}
+          />
+          <button
+            type="submit"
+            className={styles.submit_button}
+            disabled={button_disabled}
+          >
+            {fetching ? (
+              <span className={styles.loader_small}></span>
+            ) : (
+              "Submit"
+            )}
+          </button>
+        </form>
+      )}
     </>
   );
 };

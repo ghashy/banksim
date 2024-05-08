@@ -46,3 +46,9 @@ export interface IStoreInfo {
 }
 
 export type SocketEndpoints = "subscribe_on_accounts" | "subscribe_on_traces";
+
+export interface FetchError {
+  message: string;
+  err_status?: number;
+  recursive?: boolean;
+}

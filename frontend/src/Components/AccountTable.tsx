@@ -6,6 +6,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "../state/store";
 import { IAccount, SocketEndpoints } from "../types";
 import TableSkeleton from "./TableSkeleton";
+import { wait } from "../helpers";
+import { RETRY_DELAY_MS } from "../config";
 
 interface AccountTableProps {
   connect_to_socket: (endpoit: SocketEndpoints) => Promise<void>;
@@ -34,9 +36,9 @@ const AccountTable: FC<AccountTableProps> = ({ connect_to_socket }) => {
 
     set_fetching(true);
 
+    await wait(RETRY_DELAY_MS);
     await connect_to_socket("subscribe_on_accounts");
 
-    //FIXME shitty fetching logic
     set_fetching(false);
   }
 
@@ -59,7 +61,17 @@ const AccountTable: FC<AccountTableProps> = ({ connect_to_socket }) => {
       <TableHeader />
       {!account_socket_open ? (
         <div className={styles.socket_err}>
-          <p>Websocket connection is lost, try again</p>
+          <p>
+            {fetching ? (
+              <span>
+                Reconnecting<span className={styles.dot1}>.</span>
+                <span className={styles.dot2}>.</span>
+                <span className={styles.dot3}>.</span>
+              </span>
+            ) : (
+              "Websocket connection is lost, try again"
+            )}
+          </p>
           <div
             onClick={handle_reconnect_click}
             className={styles.reconnect_button}
