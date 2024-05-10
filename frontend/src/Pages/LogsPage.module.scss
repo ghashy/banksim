@@ -1,19 +1,11 @@
 @import "../general_styles.scss";
 
 .logs_page {
-  padding: 8.625rem 1rem 0;
-
-  @media (max-width: 880px) {
-    padding-top: 9.75rem;
-  }
-
-  @media (max-width: 640px) {
-    padding-top: 5.25rem;
-  }
+  @include page_padding;
 }
 
 .content {
-  padding: 3.75rem 0rem 2rem;
+  padding: 3.75rem 1rem 2rem;
 
   code {
     font-family: "JetBrains Mono";
@@ -24,5 +16,27 @@
   font-size: 1.875rem;
   font-weight: 600;
   margin-bottom: 2rem;
-  padding: 0 clamp(0px, (100vw - 70rem) / 2, 9999px);
+}
+
+.logs_container {
+  @include hide_scrollbar;
+  overflow-x: scroll;
+}
+
+.log_message {
+  white-space: nowrap;
+}
+
+.socket_err {
+  margin: 2.75rem 0 0;
+}
+
+.reconnect_button {
+  @include submit_button;
+  width: fit-content;
+  min-width: 6.375rem;
+}
+
+.loader_small {
+  @include loader_small;
 }
