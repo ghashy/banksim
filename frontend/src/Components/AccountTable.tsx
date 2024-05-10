@@ -24,10 +24,11 @@ const AccountTable: FC<AccountTableProps> = ({ connect_to_socket }) => {
     (state) => state.account_list.error
   );
   const account_socket_open = useSelector<RootState, boolean>(
-    (state) => state.account_socket_open.is_open
+    (state) => state.socket_open.accounts_open
   );
   const [sorted_list, set_sorted_list] = useState<IAccount[]>([]);
   const [fetching, set_fetching] = useState(false);
+  const [visible_tokens, set_visible_tokens] = useState("");
 
   async function handle_reconnect_click() {
     if (fetching) {
@@ -40,6 +41,14 @@ const AccountTable: FC<AccountTableProps> = ({ connect_to_socket }) => {
     await connect_to_socket("subscribe_on_accounts");
 
     set_fetching(false);
+  }
+
+  function show_tokens(card_number: string) {
+    if (card_number === visible_tokens) {
+      set_visible_tokens("");
+    } else {
+      set_visible_tokens(card_number);
+    }
   }
 
   useEffect(() => {
@@ -92,6 +101,8 @@ const AccountTable: FC<AccountTableProps> = ({ connect_to_socket }) => {
           {sorted_list.map((account, idx) => (
             <TableRow
               props={account}
+              show_tokens={show_tokens}
+              visible_tokens={visible_tokens}
               key={idx}
             />
           ))}
