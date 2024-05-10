@@ -71,9 +71,22 @@ a.active::after {
 $content_loading_animation: content_loading 0.5s linear infinite
   alternate-reverse;
 
-@media (max-width: 640px) {
-  a.active {
-    color: $accent;
+.socket_err {
+  margin: 2.75rem 1rem 0;
+  p {
+    font-size: 1.125rem;
+
+    span {
+      .dot1 {
+        animation: content_loading 0.5s linear infinite alternate-reverse;
+      }
+      .dot2 {
+        animation: content_loading 0.5s linear 0.2s infinite alternate-reverse;
+      }
+      .dot3 {
+        animation: content_loading 0.5s linear 0.4s infinite alternate-reverse;
+      }
+    }
   }
 }
 
@@ -101,4 +114,10 @@ $content_loading_animation: content_loading 0.5s linear infinite
   border-radius: 50%;
 
   animation: spin 0.5s ease-in-out infinite;
+}
+
+@media (max-width: 640px) {
+  a.active {
+    color: $accent;
+  }
 }
