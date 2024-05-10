@@ -27,7 +27,10 @@ import {
   set_store_emmision_loading,
 } from "./state/store_info_slice";
 import { set_logs } from "./state/logs_slice";
-import { set_account_socket_open } from "./state/account_socket_slice";
+import {
+  set_account_socket_open,
+  set_logs_socket_open,
+} from "./state/socket_open_slice";
 import { SocketEndpoints } from "./types";
 import { wait } from "./helpers";
 
@@ -193,6 +196,7 @@ function App() {
             console.log("Account WebSocket connection opened");
             break;
           case "subscribe_on_traces":
+            dispatch(set_logs_socket_open(true));
             console.log("Logs WebSocket connection opened");
             break;
         }
@@ -220,6 +224,7 @@ function App() {
             console.log("Account WebSocket connection closed");
             break;
           case "subscribe_on_traces":
+            dispatch(set_logs_socket_open(false));
             console.log("Logs WebSocket connection closed");
             break;
         }
@@ -232,6 +237,7 @@ function App() {
           break;
         case "subscribe_on_traces":
           console.error("Logs token fetch failed, try again");
+          dispatch(set_logs_socket_open(false));
           break;
       }
     }
@@ -288,7 +294,7 @@ function App() {
           />
           <Route
             path="logs"
-            element={<LogsPage />}
+            element={<LogsPage connect_to_socket={connect_to_socket} />}
           />
           <Route
             path="about"
