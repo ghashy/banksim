@@ -27,17 +27,16 @@ FROM node:latest AS frontend
 
 WORKDIR /frontend
 
-# Copy the frontend source code
-COPY frontend/src /frontend/src
-COPY frontend/index.html /frontend/index.html
-COPY frontend/package.json /frontend/package.json
-COPY frontend/public /frontend/public
-COPY frontend/tsconfig.json /frontend/tsconfig.json
-COPY frontend/vite.config.ts /frontend/vite.config.ts
-COPY frontend/tsconfig.node.json /frontend/tsconfig.node.json
+RUN npm install -g pnpm
 
-# Install dependencies and build the frontend assets
-RUN npm install -g pnpm && \
+RUN --mount=type=bind,source=frontend/src,target=src \
+    --mount=type=bind,source=frontend/index.html,target=index.html \
+    --mount=type=bind,source=frontend/package.json,target=package.json \
+    --mount=type=bind,source=frontend/public,target=public \
+    --mount=type=bind,source=frontend/tsconfig.json,target=tsconfig.json \
+    --mount=type=bind,source=frontend/vite.config.ts,target=vite.config.ts\
+    --mount=type=bind,source=frontend/tsconfig.node.json,target=tsconfig.node.json \
+    --mount=type=cache,target=/frontend/node_modules/ \
     pnpm install && \
     pnpm run build
 
