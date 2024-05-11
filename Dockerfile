@@ -28,7 +28,13 @@ FROM node:latest AS frontend
 WORKDIR /frontend
 
 # Copy the frontend source code
-COPY frontend .
+COPY frontend/src /frontend/src
+COPY frontend/index.html /frontend/index.html
+COPY frontend/package.json /frontend/package.json
+COPY frontend/public /frontend/public
+COPY frontend/tsconfig.json /frontend/tsconfig.json
+COPY frontend/vite.config.ts /frontend/vite.config.ts
+COPY frontend/tsconfig.node.json /frontend/tsconfig.node.json
 
 # Install dependencies and build the frontend assets
 RUN npm install -g pnpm && \
