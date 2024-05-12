@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+docker run -d -v ./secrets:/app/secrets --name banksim -e BANKSIM_CONFIG_FILE="/app/secrets/config.yaml" -e TERMINAL_PASSWORD_FILE="/app/secrets/terminal_password.txt" -e POSTGRES_PASSWORD_FILE="/app/secrets/postgres_password.txt" -e DATA_BACKEND_TYPE="postgres"  ghashy/banksim:0.1 
