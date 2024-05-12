@@ -6,6 +6,8 @@ import NewAccountModalContent from "./NewAccountModalContent";
 import NewTransactionModalContent from "./NewTransactionModalContent";
 import DeleteAccountModalContent from "./DeleteAccountModalContent";
 import OpenCreditModalContent from "./OpenCreditModalContent";
+import { useDispatch } from "react-redux";
+import { reset_checked_itmes } from "../state/checked_items_slice";
 
 interface ModalWindowProps {
   kind: ActionKind;
@@ -15,6 +17,7 @@ interface ModalWindowProps {
 const ModalWindow: FC<ModalWindowProps> = ({ kind, hide_window }) => {
   const content_ref = useRef<HTMLDivElement>(null);
   const [content_kind_class_name, set_content_kind_class_name] = useState("");
+  const dispatch = useDispatch();
 
   function define_class_name(kind: ActionKind): void {
     switch (kind) {
@@ -34,6 +37,11 @@ const ModalWindow: FC<ModalWindowProps> = ({ kind, hide_window }) => {
         set_content_kind_class_name(`${styles.content_open_credit}`);
         break;
     }
+  }
+
+  function handle_modal_close() {
+    dispatch(reset_checked_itmes());
+    hide_window();
   }
 
   useEffect(() => {
@@ -59,7 +67,7 @@ const ModalWindow: FC<ModalWindowProps> = ({ kind, hide_window }) => {
   useEffect(() => {
     const handle_esc_press = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        hide_window();
+        handle_modal_close();
       }
     };
 
@@ -77,7 +85,7 @@ const ModalWindow: FC<ModalWindowProps> = ({ kind, hide_window }) => {
       >
         <FaXmark
           className={styles.close_icon}
-          onClick={hide_window}
+          onClick={handle_modal_close}
         />
         {kind === "new_transaction" && (
           <NewTransactionModalContent hide_window={hide_window} />
